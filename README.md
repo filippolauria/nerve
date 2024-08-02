@@ -75,7 +75,7 @@ NERVE offers the following features:
 We put together the Graphical User Interface primarily for ease of use, but we will be putting more emphasis on detections and new signatures than creating a full blown user interface. 
 
 # Prerequisites
-NERVE will install all the prerequisites for you automatically if you choose the Server installation (CentOS 7.x and Ubuntu 18.x were tested) (by using `install/setup.sh` script). It also comes with a Dockerfile for your convenience. 
+NERVE will install all the prerequisites for you automatically if you choose the Server installation (by using `install/setup.sh` script). It also comes with a Dockerfile for your convenience. 
 
 Keep in mind, NERVE requires root access for the initial setup on bare metal (package installation, etc).
 

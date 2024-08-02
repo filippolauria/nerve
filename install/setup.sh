@@ -2,282 +2,338 @@
 
 # Nerve installation script.
 
+_green='\033[0;32m'
+_red='\033[0;31m'
+_blue='\033[0;34m'
+_nc='\033[0m' # No Color
 
 # path of NERVE' systemd file
 systemd_service="/lib/systemd/system/nerve.service"
 
-# if NERVE' systemd file exists...
-if [ -f $systemd_service ]; then
-  # ... we get the old username/password pair...
-  password=$(grep "Environment=password=" /lib/systemd/system/nerve.service)
-  username=$(grep "Environment=username=" /lib/systemd/system/nerve.service)
-  password=${password#"Environment=password="}
-  username=${username#"Environment=username="}
-  
-  fresh_installation=0
-else
-  # ... otherwise we generate new random access credentials.
-  password=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 12)
-  username="admin_"$(cat /dev/urandom | tr -dc '0-9' | head -c 4)
+installation_dir="/opt/nerve"
 
-  fresh_installation=1
-fi
+# default port
+port=8080
 
-# if NERVE's config.py exists...
-if [ -f "config.py" ]; then
-  # ... we get the old TCP port from it...
-  port=$(grep WEB_PORT config.py | awk -F' = ' '{print $2}')
-else
-  # ... otherwise we use the default 8080/TCP.
-  port=8080
-fi
-
-# we also get the current working directory...
+# current working directory
 cwd="$(pwd)"
-# ... and the operating system.
-os=$(grep '^ID=' /etc/*-release | cut -d'=' -f2)
 
+password=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | head -c 12)
+username="admin_"$(cat /dev/urandom | tr -dc '0-9' | head -c 4)
 
-# we want that this script is being executed as root.
-if [ "$EUID" -ne 0 ]; then 
-  echo "[!] This script must be run as root."
-  exit 1
-fi
-
-# we want that this script is executed from the /opt/nerve folder.
-if [ "$cwd" != "/opt/nerve" ]; then
-  echo "[!] This script must be run from within the folder /opt/nerve"
-  exit 1
-fi
-
-# we make sure that requirements.txt is present in the cwd folder.
-if [ ! -f "requirements.txt" ]; then
-  echo "[!] requirements.txt is missing. Did you unpack the files into /opt/nerve?"
-  exit 1
-fi
-
-# we check if NERVE can be installed on the current operating system.
-case $os in
-"redhat" | "ubuntu" | "debian")
-  echo "[+] This operating system ($os) is supported."
-  ;;
-*)
-  cat <<EOF
-[!] This operating system ($os) is not supported.
-    Only CentOS 7.x, Ubuntu 18.x, Debian 11.x are supported.
-EOF
-  exit 1
-  ;;
-esac
-
-# we make sure that a working Internet connection is present.
-if ! ping -c 1 -W 3 google.com &> /dev/null; then
-  echo "[!] You must have a working internet connection to download the dependencies."
-  exit 1
-fi
-
-# this function installs required packages in a redhat-like environment
-function install_redhat {
-  yum install epel-release -y && \
-  yum update -y && \
-  yum install -y gcc && \
-  yum install -y redis && \
-  yum install -y python3 && \
-  yum install -y python3-pip && \
-  yum install -y python3-devel && \
-  yum install -y python3-virtualenv && \
-  yum install -y wget && \
-  yum clean all
-  wget https://nmap.org/dist/nmap-7.90-1.x86_64.rpm
-  rpm -U nmap-*.rpm
-  rm -rf nmap-*.rpm
+is_fresh_installation() {
+  # 0 means true
+  if [ -f $systemd_service ]; then return 1; else return 0; fi
 }
 
-# this function installs required packages in a debian environment
-function install_debian {
-  apt -y update && \
-  apt -y install gcc redis python3 python3-pip python3-dev virtualenv \
-                 libjpeg-dev libffi-dev wget nmap 
+is_app_running() {
+  systemctl is-active --quiet nerve
+  if [ $? != 0 ]; then return 1; else return 0; fi
 }
 
-# this function installs required packages in an ubuntu environment
-function install_ubuntu {
-  apt -y update && \
-  apt -y install gcc redis python3 python3-pip python3-dev virtualenv wget nmap
+setup_port() {
+  # if NERVE's config.py exists...
+  if [ -f "config.py" ]; then
+    # ... we get the old TCP port from it...
+    port=$(grep WEB_PORT config.py | awk -F' = ' '{print $2}')
+  fi
+
+  # ... otherwise we use the default 8080/TCP. 
 }
 
-# this function configures firewalld (if present).
-function configure_firewalld {
-  if firewall-cmd -V &> /dev/null; then
-    if ps aux | grep -v grep | grep -q firewalld; then
-      echo "[+] Detected a running instance of Firewalld."
-      echo -n "[+] Adding Firewalld rule to the public zone: ${port}/tcp... "
-      firewall-cmd --zone=public --permanent --add-port=${port}/tcp &> /dev/null
-      firewall-cmd --reload
-      if [ $? != 1 ]; then echo "OK!"; else "KO"; fi      
-    fi
+print_red() {
+  echo -e "${_red}$1${_nc}"
+}
+
+print_blue() {
+  echo -e "${_blue}$1${_nc}"
+}
+
+print_green() {
+  echo -e "${_green}$1${_nc}"
+}
+
+ensure_debian() {
+  # operating system
+  os=$(grep '^ID=' /etc/*-release | cut -d'=' -f2)
+
+  if [ "${os}" != "debian" ]; then
+    return 1
   fi
 }
 
-# this function configures iptables (if present).
-function configure_iptables {
-  if iptables -V &> /dev/null; then
-    echo "[+] Detected iptables."
-    if ! iptables -vnL | grep -q "NERVE Console"; then
-      echo -n "[+] Adding an iptables rule to allow access to NERVE's Web console... "
-      iptables -I INPUT -p tcp --dport ${port} -j ACCEPT -m comment --comment "NERVE Console"
-      iptables-save
-      if [ $? != 1 ]; then echo "OK!"; else "KO"; fi
-    fi
+ensure_root() {
+  if [ "$(id -u)" -ne 0 ]; then
+    return 1
+  fi
+}
+
+ensure_opt_dir() {
+  if [ "${cwd}" != "${installation_dir}" ]; then
+    return 1
+  fi
+}
+
+ensure_requirements() {
+  if [ ! -f "requirements.txt" ]; then
+    return 1
+  fi  
+}
+
+# this function installs required packages
+install_packages() {
+  apt -y -o 'Acquire::ForceIPv4=true' update && \
+  
+  apt --no-install-recommends -o 'Acquire::ForceIPv4=true' -y install \
+    libpq-dev libjpeg-dev libffi-dev libfreetype-dev libfreetype6 libfreetype6-dev \
+    gcc redis wget nmap && \
+
+  apt --no-install-recommends -o 'Acquire::ForceIPv4=true' -y install python3 python3-pip python3-dev virtualenv
+
+  if [ $? != 0 ]; then
+    return 1
+  fi
+}
+
+check_ipv4_connectivity() {
+  if ! ping -4 -c 1 -W 3 ipv4.google.com &> /dev/null; then
+    return 1
   fi
 }
 
 # this function configures SELinux
-function configure_selinux {
-  if [ -f "/sbin/setenforce" ]; then
-    echo -n "[+] Setting SELinux in Permissive Mode... "
-    setenforce 0
-    if [ $? != 1 ]; then echo "OK!"; else "KO"; fi
+configure_selinux() {
+  if [ ! -f "/sbin/setenforce" ]; then
+    return 0
+  fi
+
+  setenforce 0
+  if [ $? != 0 ]; then
+    return 1
+  fi
     
-    if [ -f /etc/sysconfig/selinux ]; then
-      if grep -q enforcing /etc/sysconfig/selinux; then
-        echo -n "[+] Setting SELinux in Permissive Mode... "
-        sed -i "s/enforcing/permissive/g" /etc/sysconfig/selinux &> /dev/null
-        if [ $? != 1 ]; then echo "OK!"; else "KO"; fi
-      fi
-    fi
+  local selinux_conf_file="/etc/sysconfig/selinux"
+  if [ ! -f "${selinux_conf_file}" ]; then
+    return 0
+  fi
+  
+  if ! grep -q enforcing "${selinux_conf_file}"; then
+    return 0
+  fi
+    
+  sed -i "s/enforcing/permissive/g" "${selinux_conf_file}" &> /dev/null
+  if [ $? != 0 ]; then
+    return 1
   fi
 }
 
-# this function is a wrapper for other firewall check and setup functions.
-function check_fw {
-  configure_firewalld
-  configure_iptables
+retrieve_credentials_from_systemd_unit() {
+  # if NERVE' systemd file exists...
+  if ! is_fresh_installation; then
+    # ... we get the old username/password pair...
+    password=$(grep "Environment=password=" "${systemd_service}")
+    username=$(grep "Environment=username=" "${systemd_service}")
+    password=${password#"Environment=password="}
+    username=${username#"Environment=username="}
+  fi
+
+  # ... otherwise we generate new random access credentials.
 }
 
+shutdown_running_instance() {
+  if is_fresh_installation; then
+    return 0
+  fi
 
-# according to $os value
-# - we install the right packages
-# - we select the correct name for the redis service
-#   and store it in the redis_service variable
-echo "[+] Installing packages..."
-redis_service=""
+  if ! is_app_running; then
+    return 0
+  fi
 
-case $os in
-"ubuntu")
-  install_ubuntu
-  redis_service="redis-server.service"
-  ;;
+  systemctl stop nerve.service
+  if [ $? != 0 ]; then
+    return 1
+  fi
 
-"debian")
-  install_debian
-  redis_service="redis-server.service"
-  ;;
+  return 0
+}
 
-"redhat")
-  install_redhat
-  redis_service="redis.service"
-  ;;
-esac
+enable_and_start_redis() {
+  systemctl enable redis-server.service && \
+  systemctl start redis-server.service
+  if [ $? != 0 ]; then
+    return 1
+  fi
+}
 
-# we enable and start the redis service
-echo "[+] Starting Redis..."
-systemctl enable $redis_service
-systemctl start $redis_service
+install_python_env() {
+  # we create a new python3 virtual environment
+  local env_dir="${installation_dir}/env"
+  rm -rf "${env_dir}" && \
+  mkdir "${env_dir}" && \
+  chmod 640 "${env_dir}" && \
+  virtualenv -q "${env_dir}"
 
-# we create a new python3 virtual environment
-echo "[+] Creating python3 virtual environment..."
-rm -rf /opt/nerve/env
-mkdir /opt/nerve/env
-chmod 640 /opt/nerve/env
-virtualenv -q /opt/nerve/env
-if [ $? != 1 ]; then echo "OK!"; else "KO"; fi
+  if [ $? != 0 ]; then
+    return 1
+  fi
+}
 
-# we install python3 dependencies
-echo "[+] Installing python3 dependencies..."
-. /opt/nerve/env/bin/activate
-/opt/nerve/env/bin/pip3 install -r requirements.txt
+setup_python_env() {
+  # we install python3 dependencies
+  . "${installation_dir}/env/bin/activate"
+  "${installation_dir}/env/bin/pip3" install -r requirements.txt
+  
+  if [ $? != 0 ]; then
+    return 1
+  fi
+}
 
-
-# we create a systemd file
-echo -n "[+] Setting up systemd service... "
-echo "
+setup_systemd_unit() {
+  # we create a systemd unit
+  
+  cat <<EOF > "$systemd_service"
 [Unit]
 Description=NERVE
-After=network.target $redis_service
+After=network.target redis-server.service
 
 [Service]
 Type=simple
-WorkingDirectory=/opt/nerve
-Environment=username=$username
-Environment=password=$password
-ExecStart=/bin/bash -c 'cd /opt/nerve/ && /opt/nerve/env/bin/python3 /opt/nerve/main.py'
+WorkingDirectory=${installation_dir}
+Environment=username=${username}
+Environment=password=${password}
+ExecStart=/bin/bash -c 'cd ${installation_dir}/ && ${installation_dir}/env/bin/python3 ${installation_dir}/main.py'
 
 [Install]
 WantedBy=multi-user.target
-" > "$systemd_service"
-if [ $? != 1 ]; then echo "OK!"; else "KO"; fi
-chown root:root "$systemd_service"
-chmod 640 "$systemd_service"
+EOF
+  if [ $? != 0 ]; then
+    return 1
+  fi
 
+  chown root:root "${systemd_service}" && chmod 640 "${systemd_service}"
+  if [ $? != 0 ]; then
+    return 1
+  fi
+}
 
-# we check and setup the firewall (if present)
-echo "[+] Checking Firewall..."
-check_fw
+enable_and_start_app() {
+  # we enable and start NERVE
+  systemctl daemon-reload && \
+  systemctl enable nerve.service && \
+  systemctl start nerve.service
+}
+
+# only debian is supported
+if ! ensure_debian; then
+  print_red "[!] Only debian OS is supported."
+  return 1
+fi
+
+# we want that this script is being executed as root.
+if ! ensure_root; then
+  print_red "[!] This script needs to be run as root."
+  return 1
+fi
+
+# we want that this script is executed from the `installation_directory` folder.
+if ! ensure_opt_dir; then
+  print_red "[!] This script must be sourced from within the folder ${installation_dir}"
+  return 1 
+fi
+
+# we make sure that requirements.txt is present in the cwd folder.
+if ! ensure_requirements; then
+  print_red "[!] requirements.txt is missing. Did you unpack the files into ${installation_dir}?"
+  return 1
+fi
+
+# # we make sure that a working Internet connection is present.
+if ! check_ipv4_connectivity; then
+  print_red "[!] You must have a working internet connection to download the dependencies."
+  return 1
+fi
+
+# # setup port
+setup_port
+
+if ! shutdown_running_instance; then
+  print_blue "[!] Failed to shutdown running instance."
+fi
+
+# if this is not a fresh install we retrieve old creds
+retrieve_credentials_from_systemd_unit
+
+print_blue "[+] Installing packages..."
+if ! install_packages; then
+  print_red "[!] Error while installing packages."
+  return 1
+fi
+
+# # start redis
+print_blue "[+] Starting Redis..."
+if ! enable_and_start_redis; then
+  print_red "[!] Failed to enable or starting redis."
+  return 1
+fi
+
+print_blue "[+] Creating python3 virtual environment..."
+if ! install_python_env; then
+  print_red "[!] Failed to create python3 virtual environment."
+  return 1
+fi
+
+print_blue "[+] Setting up python3 virtual environment..."
+if ! setup_python_env; then
+  print_red "[!] Failed to setup virtual environment."
+  return 1
+fi
+
+print_blue "[+] Setting up systemd service..."
+if ! setup_systemd_unit; then
+  print_red "[!] Failed to set up systemd service."
+  return 1
+fi
 
 # we check and setup SELinux (if present)
-echo "[+] Checking SELinux..."
-configure_selinux
+if ! configure_selinux; then
+  print_red "[!] Failed to make SELinux permissive."
+fi
 
+print_blue "[+] Starting service... "
+enable_and_start_app
 
-# we enable and start NERVE
-echo -n "[+] Starting NERVE... "
-systemctl daemon-reload
-systemctl enable nerve
-systemctl start nerve
+if ! is_app_running; then
+  print_red "[!] Something went wrong and the service could not be started."
+fi
 
+print_green "[+] Setup Complete!"
 
-# we double check if NERVE is running
-systemctl is-active --quiet nerve
-if [ $? != 1 ]; then
-  echo "OK!"
+echo -e "[+] You may access NERVE using the following URL: ${_blue}http://your_ip_here${_nc}:${_green}${port}${_nc}."
 
-  cat <<EOL
-
-[+] Setup Complete!
-
-[+] You may access NERVE using the following URL: http://your_ip_here:${port}.
-
+cat <<EOL
 [+] Credentials:
     - You must have valid credentials to access NERVE.
 
 EOL
-
-  if [ "$fresh_installation" -eq 1 ]; then
-    cat <<EOL
+  
+if is_fresh_installation; then
+  cat <<EOL
     - Since this is a fresh installation,
       some random credentials have been generated.
 EOL
-  else
-    cat <<EOL
+else
+  cat <<EOL
     - Since this is not a fresh installation,
       your old credentials have been kept.
 EOL
-  fi
+fi
 
-  cat <<EOL
+echo -e "    - NERVE stores credentials in the file ${_blue}${systemd_service}${_nc},"
 
-    - NERVE stores credentials in the file $systemd_service,
-      which is owned and editable by root only.
-
+cat <<EOL
+      which is owned and readable/writable by root only.
     - You can change your credentials by editing that file.
       Once done, remember to reload and restart NERVE:
-        systemctl daemon-reload && systemctl restart nerve
-
 EOL
-  exit 0
-else
-  echo "KO"
-  echo "Something went wrong, and the service could not be started."
-  exit 1
-fi
+
+echo -e "        ${_blue}systemctl daemon-reload && systemctl restart nerve${_nc}"
