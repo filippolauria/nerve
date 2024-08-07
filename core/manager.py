@@ -1,26 +1,31 @@
+import glob
+import importlib
 import os
 import sys
-import glob
+
+from core.logging import logger
+
 
 def get_rules(role):
-  rules = []
-  
-  for r in glob.glob('rules/**/'):
-    sys.path.insert(0, r)  
-  
-  if role == 'attacker':    
-    for r in glob.glob('rules/**/rule_*.py', recursive=True):      
-      fname = os.path.basename(r.split('.')[0])
-      rules.append(fname)
-      
-  return rules
-    
-def rule_manager(role):
-  all_rules = get_rules(role)
-  loaded_rules = {}
-  
-  for r in all_rules:
-    mod = __import__(r)
-    loaded_rules[r] = mod.Rule()
+    if role == 'attacker':
+        return [os.path.splitext(os.path.basename(r))[0] for r in glob.glob('rules/**/rule_*.py', recursive=True)]
+    return []
 
-  return loaded_rules
+
+def rule_manager(role):
+    all_rules = get_rules(role)
+    loaded_rules = {}
+
+    for r in glob.glob('rules/**/'):
+        if r not in sys.path:
+            sys.path.insert(0, r)
+
+    for rule_name in all_rules:
+        try:
+            mod = importlib.import_module(rule_name)
+            loaded_rules[rule_name] = mod.Rule()
+            logger.info(f"Imported rule {rule_name}")
+        except ImportError as e:
+            logger.error(f"Failed to import rule {rule_name}: {e}")
+
+    return loaded_rules
