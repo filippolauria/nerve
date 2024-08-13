@@ -1,82 +1,92 @@
-from core.redis  import rds
-from core.triage import Triage
-from core.parser import ScanParser
+from core.rules import BasicWebRule
 
-class Rule:
-  def __init__(self):
-    self.rule = 'CFG_8BA9'
-    self.rule_severity = 3
-    self.rule_description = 'This rule checks for misconfigurations in the blog platform Wordpress.'
-    self.rule_confirm = 'Remote Server Wordpress is Misconfigured'
-    self.rule_details = ''
-    self.rule_mitigation = '''Wordpress may have been misconfigured and potentially leaks application data.
-Remove any unnecessary files from the webserver which could potentially leak environment details of your Wordpress instance'''
-    self.rule_match_string = {
-                              '/wp-config.old':{
-                                'app':'WORDPRESS',
-                                'match':['wp-settings.php', 'DB_PASSWORD', 'MySQL settings'],
-                                'title':'Wordpress Backup File'
-                              },
-                              '/wp-config.php':{
-                                'app':'WORDPRESS',
-                                'match':['wp-settings.php', 'DB_PASSWORD', 'MySQL settings'],
-                                'title':'Wordpress Backup File'
-                              },
-                              '/wp-config.php.bak':{
-                                'app':'WORDPRESS_PHP_BAK',
-                                'match':['wp-settings.php', 'DB_PASSWORD', 'MySQL settings'],
-                                'title':'Wordpress Backup File'
-                              },
-                              '/wp-config.php.old':{
-                                'app':'WORDPRESS_PHP_OLD',
-                                'match':['wp-settings.php', 'DB_PASSWORD', 'MySQL settings'],
-                                'title':'Wordpress Backup File'
-                              },
-                              '/wp-config.php.save':{
-                                'app':'WORDPRESS_SAVE',
-                                'match':['wp-settings.php', 'DB_PASSWORD', 'MySQL settings'],
-                                'title':'Wordpress Backup File'
-                              },
-                              '/wp-content/debug.log':{
-                                'app':'WORDPRESS_DEBUG_LOG',
-                                'match':['PHP Notice', 'Debugging_in_WordPress', 'PHP Warning', 'PHP Stack trace'],
-                                'title':'Wordpress Debug Log'
-                              },
-                              '/wp-json/wp/v2/users':{
-                                'app':'WORDPRESS_USERS',
-                                'match':['"collection":[{"href":', '"_links":{"self":[{"href":""}]', 'avatar_urls', '"meta":[],'],
-                                'title':'WordPress Username Disclosure'
-                              },
-                           }
-    self.intensity = 2
 
-  def check_rule(self, ip, port, values, conf):
-    t = Triage()
-    p = ScanParser(port, values)
-    
-    domain = p.get_domain()
-    module = p.get_module()
+class Rule(BasicWebRule):
+    def __init__(self):
+        mitigation = (
+            'Wordpress may have been misconfigured and potentially leaks application data.\n'
+            'Remove any unnecessary files from the webserver which could potentially leak '
+            'environment details of your Wordpress instance'
+        )
 
-    if 'http' not in module:
-      return
-    
-    for uri, values in self.rule_match_string.items():
-      app_title = values['title']
-      resp = t.http_request(ip, port, uri=uri)
-      
-      if resp is not None:
-        for match in values['match']:
-          if match in resp.text:
-            self.rule_details = 'Wordpress Misconfiguration - {} at {}'.format(app_title, resp.url)
-            rds.store_vuln({
-              'ip':ip,
-              'port':port,
-              'domain':domain,
-              'rule_id':self.rule,
-              'rule_sev':self.rule_severity,
-              'rule_desc':self.rule_description,
-              'rule_confirm':self.rule_confirm,
-              'rule_details':self.rule_details,
-              'rule_mitigation':self.rule_mitigation
-            })
-    return
+        common_wp_config_match = ['wp-settings.php', 'DB_PASSWORD', 'MySQL settings']
+        rule_match_string = {
+            '/wp-config.old': {
+                'app': 'WORDPRESS',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File'
+            },
+            '/wp-config.php': {
+                'app': 'WORDPRESS',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Configuration File'
+            },
+            '/wp-config.php.bak': {
+                'app': 'WORDPRESS_PHP_BAK',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File'
+            },
+            '/wp-config.php.old': {
+                'app': 'WORDPRESS_PHP_OLD',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File'
+            },
+            '/wp-config.php.save': {
+                'app': 'WORDPRESS_SAVE',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File'
+            },
+            '/wp-config.php~': {
+                'app': 'WORDPRESS_VI_BACKUP',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File (vi)'
+            },
+            '/wp-config.php.swp': {
+                'app': 'WORDPRESS_VI_SWAP',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File (vi swap)'
+            },
+            '/.wp-config.php.swp': {
+                'app': 'WORDPRESS_VI_SWAP',
+                'match': common_wp_config_match,
+                'title': 'Wordpress Backup File (vi swap)'
+            },
+            '/wp-content/debug.log': {
+                'app': 'WORDPRESS_DEBUG_LOG',
+                'match': ['PHP Notice', 'Debugging_in_WordPress', 'PHP Warning', 'PHP Stack trace'],
+                'title': 'Wordpress Debug Log'
+            },
+            '/wp-content/backup-db/': {
+                'app': 'WORDPRESS_DB_BACKUP',
+                'match': ['wp-config.php', 'DB_PASSWORD'],
+                'title': 'Wordpress Database Backup Directory'
+            },
+            '/wp-json/wp/v2/users': {
+                'app': 'WORDPRESS_USERS',
+                'match': [
+                    '"collection":[{"href":', '"_links":{"self":[{"href":""}]',
+                    'avatar_urls', '"meta":[],'
+                ],
+                'title': 'WordPress Username Disclosure'
+            },
+            '/wp-json/wp/v2/comments': {
+                'app': 'WORDPRESS_COMMENTS',
+                'match': ['comment_content', 'comment_author', 'comment_date'],
+                'title': 'WordPress Comments Disclosure'
+            },
+            '/wp-json/wp/v2/posts': {
+                'app': 'WORDPRESS_POSTS',
+                'match': ['post_title', 'post_content', 'post_author'],
+                'title': 'WordPress Posts Disclosure'
+            },
+            '/wp-content/cache/': {
+                'app': 'WORDPRESS_CACHE',
+                'match': ['cache', 'cached', 'temp'],
+                'title': 'Wordpress Cache Directory'
+            },
+        }
+
+        super().__init__(rid='CFG_8BA9', intensity=2, severity=3,
+                         description='This rule checks for misconfigurations in the blog platform Wordpress.',
+                         confirm='Misconfigured Wordpress', details='Wordpress Misconfiguration',
+                         mitigation=mitigation, rule_match_string=rule_match_string)
