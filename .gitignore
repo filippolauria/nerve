@@ -1,8 +1,9 @@
 venv/
 env/
-dump.rdb
-__pycache__
-.DS_Store
+**/__pycache__
 reports/*
-tests/
 logs/*
+dump.rdb
+.DS_Store
+tests/
+
