@@ -237,11 +237,14 @@ class ScanParser:
     def get_module(self):
         return self.port_data['module']
 
+    def is_module(self, module):
+        return module in self.get_module().strip().lower()
+
     def get_product(self):
-        product = 'N/A'
-        if self.port_data['product']:
-            product = self.port_data['product']
-        return product
+        return self.port_data['product'] if self.port_data['product'] else 'N/A'
+
+    def is_product(self, product):
+        return self.port_data['product'] and product in self.port_data['product'].strip().lower()
 
     def get_portstate(self):
         return self.port_data['state']

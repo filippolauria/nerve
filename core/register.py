@@ -11,8 +11,8 @@ class Register:
         self.scan_in_progress_statuses = ['running', 'created', ]
 
     def is_scan_in_progress(self):
-        scan_status = rds.get_session_state().strip().lower()
-        return scan_status in self.scan_in_progress_statuses
+        session_state = rds.get_session_state()
+        return session_state in self.scan_in_progress_statuses
 
     def scan(self, scan):
         if self.is_scan_in_progress():
@@ -26,10 +26,10 @@ class Register:
         self.rds.store_json('sess_config', scan)
 
         networks = cfg.get_cfg_networks()
-        domains = cfg.get_cfg_domains()
-
         if networks:
             logger.info('Scheduling network(s): {}'.format(', '.join(networks)))
+
+        domains = cfg.get_cfg_domains()
         if domains:
             logger.info('Scheduling domains(s): {}'.format(', '.join(domains)))
 
