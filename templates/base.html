@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#293142">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    {% block extra_meta %}{% endblock %}
+    <title>{% block title %}{% endblock %} :: NERVE</title>
+    
+    <link href="{{ url_for('static', filename='favicon.ico') }}" rel="shortcut icon">
+    <link href="{{ url_for('static', filename='vendor/bootstrap4/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='vendor/toastr/toastr.min.css') }}" rel="stylesheet">
+    {% block extra_head_css %}{% endblock %}
+
+    <link href="{{ url_for('static', filename='css/nerve.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/master.css') }}" rel="stylesheet">
+</head>
+
+<body>
+    <div class="wrapper">
+        <div id="sidebar">
+            {% include 'sidebar.html' %}
+        </div><!-- #sidebar -->
+
+        <div id="body">
+            {% include 'navbar.html' %}
+
+            <div class="content">
+                <div class="container-fluid">
+                    {% block content %}{% endblock %}
+                </div><!-- .container-fluid -->
+            </div><!-- .content -->
+
+        </div><!-- #body -->
+
+    </div><!-- .wrapper -->
+
+    <script src="{{ url_for('static', filename='vendor/jquery3/jquery-3.4.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/bootstrap4/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/fontawesome5/js/solid.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/fontawesome5/js/fontawesome.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='vendor/toastr/toastr.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <script>
+            $(document).ready(function() {
+                {% for category, message in messages %}
+                toastr.{{category}}("{{ message }}");
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
+    {% endwith %}
+
+    {% block extra_body_javascript %}{% endblock %}
+
+</body>
+</html>

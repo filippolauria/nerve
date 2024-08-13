@@ -1,57 +1,90 @@
 <div class="wrapper">
-        <nav id="sidebar">
-            <div class="sidebar-header">
-                
-                <a href="/"><img src={{ url_for('static', filename="/img/nerve_logo.png") }} class="app-logo" width="100px" height="40px"></a>
-                <span class="app-logo"><b> <span class="logo-text">  v.{{version}} </span></b></span>
-            </div>
-            <ul class="list-unstyled components">
-              <li>
-                <a href="/qs"><i class="fas fa-home"></i> Quick Start</a>
-               </li>  
-               <li>
-                <a href="/dashboard"><i class="fas fa-rocket"></i> Dashboard</a>
-               </li>  
-               <li>
-                <a href="/assets"><i class="fas fa-laptop"></i> Assets</a>
-              </li>
-               <li>
-                <a href="/assessment"><i class="fas fa-crosshairs"></i> Assessment</a>
-              </li>
-               <li>
-                <a href="/topology"><i class="fas fa-network-wired"></i> Network Topology</a>
-                </li>
-                <li>
-                    <a href="/vulnerabilities"><i class="fas fa-bug"></i> Vulnerabilities</a>
-                </li>
-                <li>
-                    <a href="/reports"><i class="fas fa-file"></i> Reports</a>
-                </li>
-                <li>
-                    <a href="/console"><i class="fas fa-desktop"></i> Console</a>
-                </li>
-                <li>
-                    <a href="#authmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle no-caret-down"><i class="fas fa-university"></i> Documentation</a>
-                    <ul class="collapse list-unstyled" id="authmenu">
-                        <li>
-                            <a href="/documentation#gui"><i class="fas fa-info"></i> Usage</a>
-                        </li>
-                        <li>
-                            <a href="/documentation#api"><i class="fas fa-code"></i> Developer API</a>
-                        </li>
-                    </ul>
-                </li>
-                {% if frequency == "continuous" %}
-                <li>
-                    <a href="/startover"><i class="fas fa-history"></i> Reset System</a>
-                </li>
-                <hr>
-                 <center><span class="scan_type_indicator">Continuous Scan Mode</span></center>
-                {% endif %}
-                <hr>
-                <center><span><a class="withlove" href="https://github.com/PaytmLabs/nerve" target="_blank"><i class="fas fa-star c-darkorange"></i> Star us on GitHub</a></span></center>
-            </ul>
-            
-        </nav>
+    <nav id="sidebar" class="d-flex flex-column">
+        <div class="sidebar-header">
+            <a href="{{ url_for('index.view_index') }}">
+                <img src="{{ url_for('static', filename='img/nerve_logo.png') }}" class="app-logo" width="100px" height="40px">
+            </a>
+            <span class="app-logo"><b> <span class="logo-text"> v.{{version}} </span></b></span>
+        </div>
 
+        <ul class="list-unstyled components flex-grow-1">
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('qs.view_qs') }}">
+                    <i class="fas fa-home my-1"></i><span class="d-none d-md-inline">Quick Start</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('dashboard.view_dashboard') }}">
+                    <i class="fas fa-rocket my-1"></i><span class="d-none d-md-inline">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('assets.view_assets') }}">
+                    <i class="fas fa-laptop my-1"></i><span class="d-none d-md-inline">Assets</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('assessment.view_assessment') }}">
+                    <i class="fas fa-crosshairs my-1"></i><span class="d-none d-md-inline">Assessment</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('topology.view_topology') }}">
+                    <i class="fas fa-network-wired my-1"></i><span class="d-none d-md-inline">Network Topology</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('vulnerabilities.view_vulns') }}">
+                    <i class="fas fa-bug my-1"></i><span class="d-none d-md-inline">Vulnerabilities</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('reports.view_reports') }}">
+                    <i class="fas fa-file my-1"></i><span class="d-none d-md-inline">Reports</span>
+                </a>
+            </li>
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('console.view_console') }}">
+                    <i class="fas fa-desktop my-1"></i><span class="d-none d-md-inline">Console</span>
+                </a>
+            </li>
+            <li>
+                <a href="#authmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle no-caret-down">
+                    <i class="fas fa-university my-1"></i><span class="d-none d-md-inline">Documentation</span>
+                </a>
+                <ul class="collapse list-unstyled" id="authmenu">
+                    <li>
+                        <a class="d-flex align-items-center justify-content-start" href="{{ url_for('documentation.view_doc', _anchor='gui') }}">
+                            <i class="fas fa-info my-1"></i><span class="d-none d-md-inline">Usage</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="d-flex align-items-center justify-content-start" href="{{ url_for('documentation.view_doc', _anchor='api') }}">
+                            <i class="fas fa-code my-1"></i><span class="d-none d-md-inline">Developer API</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            {% if frequency == "continuous" %}
+            <li>
+                <a class="d-flex align-items-center justify-content-start" href="{{ url_for('startover.view_startover') }}">
+                    <i class="fas fa-history my-1"></i><span class="d-none d-md-inline">Reset System</span>
+                </a>
+            </li>
+            
+            <hr>
+            
+            <div class="text-center">
+                <span class="scan_type_indicator">Continuous Scan Mode</span>
+            </div>
+            {% endif %}
+        </ul>
+        
+        <div class="text-center mt-auto mb-3">
+            <a class="d-flex align-items-center justify-content-center p-2 bg-white text-decoration-none"
+                href="https://github.com/filippolauria/nerve" target="_blank">
+                <i class="fas fa-star text-warning mr-1"></i><span class="d-none d-md-inline">Star us on GitHub</span>
+            </a>
+        </div>
+    </nav>
 </div>
