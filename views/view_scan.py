@@ -1,27 +1,24 @@
-from core.security import session_required
+from core.parser import SchemaParser
 from core.register import Register
-from core.parser   import SchemaParser
-
+from core.security import session_required
 from flask import Blueprint, request
 
-scan = Blueprint('scan', __name__,
-                  template_folder='templates')
+scan = Blueprint('scan', __name__, template_folder='templates')
 
-@scan.route('/scan',  methods=["POST"])
+
+@scan.route('/scan', methods=['POST'])
 @session_required
 def view_scan():
-  register = Register()
-  scan = request.get_json()
-  
-  if scan and isinstance(scan, dict):
-    schema = SchemaParser(scan, request)
+    scan_data = request.get_json()
+    if not isinstance(scan_data, dict):
+        return {'status': 'Malformed Scan Data'}, 400
+
+    schema = SchemaParser(scan_data, request)
     vfd, msg, scan = schema.verify()
 
     if not vfd:
-      return {'status':'Error: ' + msg }, 400
-  else:
-    return {'status':'Malformed Scan Data'}, 400
-  
-  res, code, msg = register.scan(scan)
+        return {'status': f'Error: {msg}'}, 400
 
-  return {'status': msg}, code
+    register = Register()
+    res, code, msg = register.scan(scan)
+    return {'status': msg}, code
