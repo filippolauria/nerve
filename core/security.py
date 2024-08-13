@@ -1,6 +1,6 @@
 import config
 from core.redis import rds
-from flask import session, redirect, request
+from flask import redirect, request, session, url_for
 from flask_httpauth import HTTPBasicAuth
 from functools import wraps
 from werkzeug.security import check_password_hash
@@ -24,6 +24,6 @@ def session_required(function_to_protect):
     @wraps(function_to_protect)
     def wrapper(*args, **kwargs):
         if not session.get('session'):
-            return redirect('/login', 307)
+            return redirect(url_for('login.view_login'), 307)
         return function_to_protect(*args, **kwargs)
     return wrapper
