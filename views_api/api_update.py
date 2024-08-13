@@ -1,23 +1,18 @@
-import requests
+from core.security import auth
+from core.utils import Utils
 
-from core.utils     import Utils
-from core.security  import auth
+from flask_restful import Resource
 
-from flask_restful  import Resource
-from flask import request
 
 class Update(Resource):
-  @auth.login_required
-  def get(self, component=None):  
-    utils = Utils()
-    if not component:
-      return {'status':'Component is missing'}, 400
-    
-    if component == 'platform':
-      if not utils.is_version_latest:
-        return {'status':'updates are available'}
-      else:
-        return {'status':'system is up to date'}  
-    
-    
-    return {'status':'unsupported action'}, 400
+    @auth.login_required
+    def get(self, component=None):
+        if not component:
+            return {'status': 'Component is missing'}, 400
+
+        if component != 'platform':
+            return {'status': 'unsupported action'}, 400
+
+        utils = Utils()
+        status = 'system is up to date' if utils.is_version_latest() else 'updates are available'
+        return {'status': status}
