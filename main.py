@@ -2,34 +2,34 @@ import config
 import os
 import sys
 
-from core.redis   import rds
+from core.redis import rds
 from core.workers import start_workers
 
+from flask import Flask
+from flask_restful import Api
 from version import VERSION
-from flask   import Flask
-from flask_restful  import Api
+from werkzeug.security import generate_password_hash
 
 # Import Blueprints
-from views.view_index      import index
-from views.view_docs       import documentation
-from views.view_dashboard  import dashboard
-from views.view_reports    import reports
+from views.view_index import index
+from views.view_docs import documentation
+from views.view_dashboard import dashboard
+from views.view_reports import reports
 from views.view_assessment import assessment
-from views.view_topology   import topology
-from views.view_assets     import assets
-from views.view_welcome    import welcome
-from views.view_qs         import qs
-from views.view_login      import login
-from views.view_console    import console
-from views.view_logout     import logout
-from views.view_download   import download
-from views.view_stream     import stream
-from views.view_settings   import settings
-from views.view_scan       import scan
-from views.view_vulns      import vulns
-from views.view_alert      import alert
-from views.view_startover  import startover
-
+from views.view_topology import topology
+from views.view_assets import assets
+from views.view_welcome import welcome
+from views.view_qs import qs
+from views.view_login import login
+from views.view_console import console
+from views.view_logout import logout
+from views.view_download import download
+from views.view_stream import stream
+from views.view_settings import settings
+from views.view_scan import scan
+from views.view_vulns import vulns
+from views.view_alert import alert
+from views.view_startover import startover
 
 # Import REST API Endpoints
 from views_api.api_health import Health
@@ -60,83 +60,83 @@ app.register_blueprint(scan)
 app.register_blueprint(alert)
 app.register_blueprint(startover)
 
-
 app.config.update(
-  SESSION_COOKIE_SAMESITE='Strict',
+    SESSION_COOKIE_SAMESITE='Strict',
 )
 app.secret_key = os.urandom(24)
 
 api = Api(app)
 api.add_resource(Health, '/health')
 api.add_resource(Update, '/api/update', '/api/update/<string:component>')
-api.add_resource(Scan,   '/api/scan', '/api/scan/<string:action>')
-api.add_resource(Exclusion,   '/api/exclusion', '/api/exclusion')
+api.add_resource(Scan, '/api/scan', '/api/scan/<string:action>')
+api.add_resource(Exclusion, '/api/exclusion', '/api/exclusion')
 
 
 # Set Security Headers
 @app.after_request
-def add_security_headers(resp):
-  if config.WEB_SECURITY:
-    resp.headers['Content-Security-Policy'] = config.WEB_SEC_HEADERS['CSP']
-    resp.headers['X-Content-Type-Options'] = config.WEB_SEC_HEADERS['CTO']
-    resp.headers['X-XSS-Protection'] = config.WEB_SEC_HEADERS['XSS']
-    resp.headers['X-Frame-Options'] = config.WEB_SEC_HEADERS['XFO']
-    resp.headers['Referrer-Policy'] = config.WEB_SEC_HEADERS['RP']
-    resp.headers['Server'] = config.WEB_SEC_HEADERS['Server']
-  return resp  
+def add_security_headers(response):
+    if config.WEB_SECURITY:
+        response.headers['Content-Security-Policy'] = config.WEB_SEC_HEADERS['CSP']
+        response.headers['X-Content-Type-Options'] = config.WEB_SEC_HEADERS['CTO']
+        response.headers['X-XSS-Protection'] = config.WEB_SEC_HEADERS['XSS']
+        response.headers['X-Frame-Options'] = config.WEB_SEC_HEADERS['XFO']
+        response.headers['Referrer-Policy'] = config.WEB_SEC_HEADERS['RP']
+        response.headers['Server'] = config.WEB_SEC_HEADERS['Server']
+    return response
+
 
 # Context Processors
 @app.context_processor
 def status():
-  progress = rds.get_scan_progress()
-  session_state = rds.get_session_state()
-  status = 'Ready'
-  if session_state == 'created':
-    status = 'Initializing...'
-  elif session_state == 'running':
-    if progress: 
-      status = 'Scanning... [QUEUE:{}]'.format(progress)
-    else:
-      status = 'Busy...'
+    result = {'status': 'Ready'}
+    session_state = rds.get_session_state()
 
-  return dict(status=status)
+    if session_state == 'created':
+        result['status'] = 'Initializing...'
+    elif session_state == 'running':
+        progress = rds.get_scan_progress()
+        result['status'] = f'Scanning... [QUEUE:{progress}]' if progress > 0 else 'Busy...'
+
+    return result
+
 
 @app.context_processor
 def show_version():
-  return dict(version=VERSION)
+    return dict(version=VERSION)
+
 
 @app.context_processor
 def show_frequency():
-  config = rds.get_scan_config()
-  scan_frequency = None
-  if config:
-    scan_frequency = config['config']['frequency']
-  return dict(frequency=scan_frequency)
+    result = {'frequency': None}
+    config = rds.get_scan_config()
+    if config:
+        result['frequency'] = config['config']['frequency']
+    return result
+
 
 @app.context_processor
 def show_vuln_count():
-  return dict(vuln_count=len(rds.get_vuln_data()))
+    return dict(vuln_count=len(rds.get_vuln_data()))
+
 
 if __name__ == '__main__':
-  if not (config.WEB_USER or config.WEB_PASSW):
-    reason = "The username or password environment variables are not set correctly."
+    if not (config.WEB_USER or config.WEB_PASSW):
+        reason = "The username or password environment variables are not set correctly."
 
-    service_filepath = "/lib/systemd/system/nerve.service"
-    if os.path.isfile(service_filepath):
-      reason += """
+        service_filepath = "/lib/systemd/system/nerve.service"
+        if os.path.isfile(service_filepath):
+            reason += f"""
 
 If you are running NERVE as a systemd service,
-please edit {} in order to set valid username and password.
+please edit {service_filepath} in order to set valid username and password.
 Once done, remember to reload and restart NERVE:
 systemctl daemon-reload && systemctl restart nerve
-""".format(service_filepath)
-      
-    sys.exit(reason)
+"""
 
-  rds.initialize()
-  start_workers()
-  app.run(debug = config.WEB_DEBUG, 
-          host  = config.WEB_HOST, 
-          port  = config.WEB_PORT,
-          threaded=True,
-          use_evalex=False)
+        sys.exit(reason)
+
+    config.WEB_PASSW_HASH = generate_password_hash(config.WEB_PASSW)
+
+    rds.initialize()
+    start_workers()
+    app.run(debug=config.WEB_DEBUG, host=config.WEB_HOST, port=config.WEB_PORT, threaded=True, use_evalex=False)
