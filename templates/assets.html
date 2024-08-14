@@ -42,12 +42,12 @@
 </div>
 
 <div class="row">
-    <div class="col-md-12 col-lg-12">
+    <div class="col-12">
         <div class="card">
             <div class="card-header">{{ _title }}</div>
             <div class="card-body">
-                <p class="card-title"></p>
-                <table class="table table-hover" id="dataTables-example" width="100%">
+                {% if data %}
+                <table class="table table-hover" id="dataTables-assets" width="100%">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -58,42 +58,48 @@
                             <th>Operating System</th>
                         </tr>
                     </thead>
-                    {% if data %}
                     {% for d, values in data.items() %}
                     <tr>
                         <td>{{loop.index}}.</td>
-                        <td><a href="http://geoiplookup.net/ip/{{d[4:]}}" target="_blank">{{d[4:]}}</a></td>
+                        <td>{{d[4:]}}<a class="mx-1 text-decoration-none" href="https://geoiplookup.io/geo/{{d[4:]}}" target="_blank"><i class="fas fa-search-location"></i></a></td>
                         <td>
                             {% if values.domain %}
-                            <a href="https://whois.domaintools.com/{{values.domain}}"
-                                target="_blank">{{values.domain}}</a>
+                            {{values.domain}}<a class="mx-1 text-decoration-none" href="https://whois.domaintools.com/{{values.domain}}" target="_blank"><i class="fas fa-search"></i></a>
                             {% else %}
                             N/A
                             {% endif %}
                         </td>
                         <td>
-                            <h6>
-                                {% for port in values.ports %}
-                                <span class="badge badge-info">{{port}}</span>
-                                {% endfor %}
-                            </h6>
+                            {% for port in values.ports %}
+                            <span class="badge badge-info font-weight-bold h6">{{port}}</span>
+                            {% endfor %}
                         </td>
                         <td>
-                            <h6>
-                                {% for key, value in values.port_data.items() %}
-                                <span class="badge badge-secondary">{{value.product}}</span>
-                                {% endfor %}
-                            </h6>
+                            {% for key, value in values.port_data.items() %}
+                            <span class="badge badge-secondary font-weight-bold h6">{{value.product}}</span>
+                            {% endfor %}
                         </td>
                         <td>
-                            <h6><span class="badge badge-primary">{% if values.os %} {{values.os}} {% endif %}</span>
-                            </h6>
+                            {% if values.os %}
+                            <span class="badge badge-primary font-weight-bold h6">{{ values.os }}</span>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
-                    {% endif %}
-
                 </table>
+                {% else %}
+                <span class="font-weight-bold">
+                    {% if status == "Ready" %}
+                    No scan in progress.
+                    {% else %}
+                        {% if refresh_interval %}
+                        <i class="fas fa-spinner fa-spin mx-1"></i>Loading...
+                        {% else %}
+                        No data to display. Tip: enable auto-refresh.
+                        {% endif %}
+                    {% endif %}
+                </span>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -117,6 +123,10 @@
                     window.location.href = newUrl;
                 }
             });
+            
+            {% if data %}
+            initDataTable('#dataTables-assets');
+            {% endif %}
         });
     </script>
 {% endblock %}

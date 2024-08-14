@@ -17,6 +17,7 @@
     <div class="page-title flex-fill">
         <h3>{{ _title }}</h3>
     </div>
+
     <div>
         <label class="sr-only" for="refresh_interval">Refresh Interval (seconds)</label>
         <div class="input-group mb-2 mr-sm-2">
@@ -41,60 +42,70 @@
     </div>
 </div>
   
-  <div class="row">
-      <div class="col-md-12 col-lg-12">
-          <div class="card">
-              <div class="card-header">Vulnerabilities</div>
-              <div class="card-body">
-                  <p class="card-title"></p>
-                  <table class="table table-hover" id="dataTables-vulnerabilities" width="100%">
-                      <thead>
-                          <tr>
-                              <th>#</th>
-                              <th>Target</th>
-                              <th>Domain</th>
-                              <th>Port</th>
-                              <th>Severity</th>
-                              <th>Result</th>
-                              <th>Actions</th>
-                          </tr>
-                      </thead>
-                      {% if data %}
-                      {% for key, value in data.items() %}
-                      <tr>
-                         <td>{{loop.index}}.</td>
-                         <td>{{value.ip}}</td>
-                         <td>{% if value.domain %} {{value.domain}} {% else %} N/A {% endif %}</td>
-                         <td>{{value.port}}</td>
-                         {% if value.rule_sev == 0 %}
-                         <td data-order="0"><span class="informational">Informational</td> 
-                         {% elif value.rule_sev == 1 %}
-                         <td data-order="1"><span class="low">Low</td>
-                         {% elif value.rule_sev == 2 %}
-                         <td data-order="2"><span class="medium">Medium</td>
-                         {% elif value.rule_sev == 3 %}
-                         <td data-order="3"><span class="high">High</span></td>
-                         {% elif value.rule_sev == 4 %}
-                         <td data-order="4"><span class="critical">Critical</td>
-                         {% endif %}
-                         <td>{{value.rule_confirm}}</td>
-                         <td>
+<div class="row">
+    <div class="col-md-12 col-lg-12">
+        <div class="card">
+            <div class="card-header">Vulnerabilities</div>
+            <div class="card-body">
+                {% if data %}
+                <table class="table table-hover" id="dataTables-vulnerabilities" width="100%">
+                    <thead>
+                        <tr>
+                        <th>#</th>
+                        <th>Target</th>
+                        <th>Domain</th>
+                        <th>Port</th>
+                        <th>Severity</th>
+                        <th>Result</th>
+                        <th>Actions</th>
+                        </tr>
+                    </thead>
+                    {% for key, value in data.items() %}
+                    <tr>
+                        <td>{{loop.index}}.</td>
+                        <td>{{value.ip}}</td>
+                        <td>{% if value.domain %} {{value.domain}} {% else %} N/A {% endif %}</td>
+                        <td>{{value.port}}</td>
+                        {% if value.rule_sev == 0 %}
+                        <td data-order="0"><span class="informational">Informational</td> 
+                        {% elif value.rule_sev == 1 %}
+                        <td data-order="1"><span class="low">Low</td>
+                        {% elif value.rule_sev == 2 %}
+                        <td data-order="2"><span class="medium">Medium</td>
+                        {% elif value.rule_sev == 3 %}
+                        <td data-order="3"><span class="high">High</span></td>
+                        {% elif value.rule_sev == 4 %}
+                        <td data-order="4"><span class="critical">Critical</td>
+                        {% endif %}
+                        <td>{{value.rule_confirm}}</td>
+                        <td>
                             <a href="{{ url_for('alert.view_alert', alert_id=key) }}">
-                            <button type="button" class="btn btn-outline-info mb-2">View</button>
+                                <button type="button" class="btn btn-outline-info mb-2">View</button>
                             </a>
                             <a href="{{ url_for('alert.view_resolve_alert', alert_id=key) }}">
                                 <button type="button" class="btn btn-outline-success mb-2">Resolve</button>
                             </a>
                         </td>
-                       </tr>
-                       {% endfor %}
-                       {% endif %}
-          
-                  </table>
-              </div>
-          </div>
-      </div>
-  </div>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% else %}
+                <span class="font-weight-bold">
+                    {% if status == "Ready" %}
+                    No scan in progress.
+                    {% else %}
+                        {% if refresh_interval %}
+                        <i class="fas fa-spinner fa-spin mx-1"></i>Loading...
+                        {% else %}
+                        No data to display. Tip: enable auto-refresh.
+                        {% endif %}
+                    {% endif %}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_body_javascript %}
@@ -114,6 +125,10 @@
                     window.location.href = newUrl;
                 }
             });
+
+            {% if data %}
+            initDataTable('#dataTables-vulnerabilities');
+            {% endif %}
         });
     </script>
 {% endblock %}

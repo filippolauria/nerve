@@ -121,6 +121,7 @@
 
 <div class="row">
 
+    {% if vulns %}
     <div class="col-md-6 col-lg-6">
         <div class="card">
             <div class="content">
@@ -133,7 +134,9 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
+    {% if radar %}
     <div class="col-md-6 col-lg-6">
         <div class="card">
             <div class="content">
@@ -146,6 +149,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
 
 </div>
 
@@ -254,17 +258,16 @@
 {% block extra_body_javascript %}
 <script src="{{ url_for('static', filename='vendor/chartsjs/Chart.min.js' ) }}"></script>
 
-{% if vulns %}
-<script>
-    var donut = document.getElementById("doughnutchart");
-    var radar = document.getElementById("radar");
 
+<script>
+    {% if vulns %}
+    var donut = document.getElementById("doughnutchart");
     var myChart1 = new Chart(donut, {
         type: 'doughnut',
         data: {
             labels: ["Critical", "High", "Medium", "Low"],
             datasets: [{
-                data: {% if chart %}[{{ chart.4 }}, {{ chart.3 }}, {{ chart.2 }}, {{ chart.1 }}]{% else %}[0, 0, 0, 0],{% endif %}
+                data: {% if chart %}[{{ chart.4 }}, {{ chart.3 }}, {{ chart.2 }}, {{ chart.1 }}]{% else %}[0, 0, 0, 0]{% endif %},
                 backgroundColor: ["black", "red", "orange", "green"],
             }]
         },
@@ -288,11 +291,12 @@
         },
     }
     });
-
+    {% endif %}
 
     {% if radar %}
-    var data_from_python = {{ radar|tojson }}
-    var radar = new Chart(radar, {
+    var radar = document.getElementById("radar");
+    var data_from_python = {{ radar|tojson }};
+    var myChart2 = new Chart(radar, {
         type: 'radar',
         data: {
             labels: Object.keys(data_from_python),
@@ -317,12 +321,11 @@
                 ticks: {
                     beginAtZero: true,
                     precision: 0
-
                 }
             }
         }
     });
     {% endif %}
 </script>
-{% endif %}
+
 {% endblock %}
