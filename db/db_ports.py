@@ -38,6 +38,11 @@ admin_ports = {
     2222: 'SSH',
     23: 'Telnet',
     3389: 'RDP',
+    5800: "VNC",
+    5801: "VNC",
+    5802: "VNC",
+    5803: "VNC",
+    5804: "VNC",
     5900: 'VNC',
     5901: 'VNC',
     5902: 'VNC',
@@ -62,6 +67,9 @@ svc_ports = {
     111: 'NFS',
     10443: 'Fortinet',
     1883: 'MQTT',
+    3128: 'Squid Proxy',
+    2181: 'Zookeeper',
+    5000: 'UPnP',
 }
 
 ftp_ports = {
@@ -110,6 +118,10 @@ https_ports = {
 
 vpn_ports = {
     1194: 'OpenVPN',
+    1701: 'L2TP',
+    1723: 'PPTP',
+    4500: 'IPsec',
+    500: 'IPsec',
 }
 
 time_ports = {

@@ -1,36 +1,28 @@
-from core.redis   import rds
-from core.parser  import ScanParser
-from db.db_ports  import ftp_ports
+from core.parser import ScanParser
+from core.redis import rds
+from core.rules import BaseRule
+from db.db_ports import ftp_ports
 
-class Rule:
-  def __init__(self):
-    self.rule = 'SVC_C74A'
-    self.rule_severity = 3
-    self.rule_description = 'This rule checks for open FTP Ports'
-    self.rule_confirm = 'Remote Server Exposes FTP Port(s)'
-    self.rule_details = ''
-    self.rule_mitigation = '''Ensure at the bare minimum FTP is over SSL, and only allow trusted clients to connect to it over the network.'''
-    self.rule_match_string = ftp_ports
-    self.intensity = 0
 
-  def check_rule(self, ip, port, values, conf):
-    p = ScanParser(port, values)
+class Rule(BaseRule):
+    def __init__(self):
+        super().__init__()
+        self.rule = 'SVC_C74A'
+        self.rule_severity = 3
+        self.rule_description = 'This rule checks for open FTP ports.'
+        self.rule_confirm = 'Remote server exposes FTP port(s).'
+        self.rule_details = ''
+        self.rule_mitigation = (
+            'At a minimum, ensure FTP is secured with SSL, '
+            'and only allow trusted clients to connect over the network.'
+        )
+        self.intensity = 0
 
-    domain = p.get_domain()
-    
-    if port in ftp_ports:
-      self.rule_details = 'Server is listening on remote port:{} ({})'.format(port, ftp_ports[port])
-      rds.store_vuln({
-        'ip':ip,
-        'port':port,
-        'domain':domain,
-        'rule_id':self.rule,
-        'rule_sev':self.rule_severity,
-        'rule_desc':self.rule_description,
-        'rule_confirm':self.rule_confirm,
-        'rule_details':self.rule_details,
-        'rule_mitigation':self.rule_mitigation
-      })
-    
-    return
-  
+    def check_rule(self, ip, port, values, conf):
+        if port not in ftp_ports:
+            return
+
+        domain = ScanParser(port, values).get_domain()
+        self.rule_details = f'Server is listening on remote port:{port} ({ftp_ports[port]})'
+        vuln_dict = self.get_vuln_dict(ip, port, domain)
+        rds.store_vuln(vuln_dict)

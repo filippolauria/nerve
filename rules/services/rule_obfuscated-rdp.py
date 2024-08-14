@@ -1,37 +1,33 @@
-from core.redis  import rds
 from core.parser import ScanParser
+from core.redis import rds
+from core.rules import BaseRule
+from db.db_ports import rdp_ports
 
-class Rule:
-  def __init__(self):
-    self.rule = 'SVC_2125'
-    self.rule_severity = 1
-    self.rule_description = 'This rule checks for Remote Desktop (RDP) services on obfuscated ports'
-    self.rule_mitigation = '''Remote Desktop Running on non-standard ports is easy for attackers to find.
-While it doesn't do harm changing the standard port from (default) 3389, check whether Remote Desktop (RDP) can be disabled, or allow acces only from trusted IP addresses.
-'''
-    self.rule_confirm = 'Remote Server Obfuscates Remote Desktop (RDP) ports'
-    self.rule_details = ''
-    self.intensity = 0
-    
-  def check_rule(self, ip, port, values, conf):
-    p = ScanParser(port, values)
-    
-    module = p.get_module()
-    domain = p.get_domain()
-    
-    if 'ms-wbt-server' in module:
-      if port != 3389:
-        self.rule_details = 'Server is hiding Remote Desktop (RDP) behind remote port: {}'.format(port)
-        rds.store_vuln({
-          'ip':ip,
-          'port':port,
-          'domain':domain,
-          'rule_id':self.rule,
-          'rule_sev':self.rule_severity,
-          'rule_desc':self.rule_description,
-          'rule_confirm':self.rule_confirm,
-          'rule_details':self.rule_details,
-          'rule_mitigation':self.rule_mitigation
-        })
-    
-      return
+
+class Rule(BaseRule):
+    def __init__(self):
+        super().__init__()
+        self.rule = 'SVC_2125'
+        self.rule_severity = 1
+        self.rule_description = (
+            'This rule checks for Remote Desktop (RDP) services running on non-standard ports.'
+        )
+        self.rule_mitigation = (
+            "Running Remote Desktop on non-standard ports provides minimal security benefits "
+            "as attackers can still easily detect the service.\n"
+            "While changing the default port (3389) does not inherently harm security, "
+            "consider disabling Remote Desktop (RDP) if not needed, "
+            "or restrict access to the service to trusted IP addresses only.\n"
+        )
+        self.rule_confirm = 'Remote server is running Remote Desktop (RDP) on a non-standard port.'
+        self.rule_details = ''
+        self.intensity = 0
+
+    def check_rule(self, ip, port, values, conf):
+        scan_parser = ScanParser(port, values)
+
+        if port not in rdp_ports and (scan_parser.is_module('ms-wbt-server') or scan_parser.is_product('ms-wbt-server')):
+            domain = scan_parser.get_domain()
+            self.rule_details = f"Server is running Remote Desktop (RDP) on non-standard port: {port}"
+            vuln_dict = self.get_vuln_dict(ip, port, domain)
+            rds.store_vuln(vuln_dict)
