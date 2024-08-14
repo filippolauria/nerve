@@ -1,8 +1,13 @@
 // Initiate datatables in roles, tables, users page
-$('#dataTables-vulnerabilities').DataTable({
-    responsive: true,
-    pageLength: 20,
-    lengthChange: false,
-    searching: true,
-    ordering: true
-});
+
+function initDataTable(selector) {
+    $(selector).DataTable({
+        responsive: true,
+        pageLength: 20,
+        lengthChange: false,
+        searching: true,
+        ordering: true
+    });
+}
+
+
