@@ -7,9 +7,7 @@ from core.logging import logger
 
 
 def get_rules(role):
-    if role == 'attacker':
-        return [os.path.splitext(os.path.basename(r))[0] for r in glob.glob('rules/**/rule_*.py', recursive=True)]
-    return []
+    return [os.path.splitext(os.path.basename(r))[0] for r in glob.glob('rules/**/rule_*.py', recursive=True)] if role == 'attacker' else []
 
 
 def rule_manager(role):

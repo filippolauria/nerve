@@ -102,11 +102,8 @@ class Triage:
         return resp
 
     def string_in_headers(self, response, string):
-        for k, v in response.headers.items():
-            s = string.upper()
-            if s in k.upper() or s in v.upper():
-                return response
-        return False
+        s = string.upper()
+        return response if any(s in k.upper() or s in v.upper() for k, v in response.headers.items()) else False
 
     def get_tcp_socket_banner(self, ip, port, timeout=None):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

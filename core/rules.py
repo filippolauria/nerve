@@ -1,3 +1,4 @@
+from core.logging import logger
 from core.parser import ScanParser
 from core.redis import rds
 from core.triage import Triage
@@ -42,6 +43,7 @@ class BasicWebRule(BaseRule):
         self.rule_description = description
         self.rule_confirm = confirm
         self.rule_details = details
+        self.rule_details_prefix = details
         self.rule_mitigation = mitigation
         self.intensity = intensity
         self.rule_match_string = rule_match_string
@@ -50,6 +52,8 @@ class BasicWebRule(BaseRule):
         scan_parser = ScanParser(port, values)
 
         if not scan_parser.is_module('http'):
+            module = scan_parser.get_module()
+            logger.debug(f"Not http module (rule id: {self.rule} module: {module})")
             return
 
         triage = Triage()
@@ -61,11 +65,13 @@ class BasicWebRule(BaseRule):
 
                 response = triage.http_request(ip, port, uri=uri)
                 if not response:
+                    logger.debug(f"http_request failed when contacting {uri} ({self.rule})")
                     continue
+
+                logger.info(f"http_request success when contacting {uri}, status code: {response.status_code} ({self.rule})")
 
                 if self.check_match(response, values['match']):
                     title = values['title']
-                    self.rule_details += f' - {title} at {response.url}'
+                    self.rule_details = f'{self.rule_details_prefix} - {title} at {response.url}'
                     vuln_dict = self.get_vuln_dict(ip, port, domain)
                     rds.store_vuln(vuln_dict)
-            return
