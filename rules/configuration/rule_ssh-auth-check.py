@@ -9,7 +9,7 @@ class Rule(BaseRule):
     def __init__(self):
         super().__init__()
         self.rule = 'CFG_FOQW'
-        self.rule_severity = 3
+        self.rule_severity = 2
         self.rule_description = 'This rule checks if OpenSSH allows passwords as an accepted authentication mechanism'
         self.rule_confirm = 'Remote Server Supports SSH Passwords'
         self.rule_details = ''
@@ -24,9 +24,9 @@ class Rule(BaseRule):
 
         if not scan_parser.is_module('ssh') or port not in ssh_ports:
             return
-    
+
         triage = Triage()
-        
+
         output = triage.run_cmd(
             "ssh -o PreferredAuthentications=none -o ConnectTimeout=5 -o StrictHostKeyChecking=no"
             f" -o NoHostAuthenticationForLocalhost=yes -p {port} 'user@{ip}'"
