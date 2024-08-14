@@ -23,17 +23,20 @@ def run_rules(conf):
             logger.info(f"Attacking Asset: {ip} on port: {port}")
 
             for rule in rules.values():
+                rule_id = rule.rule
+
                 """
                 Check if the target is in exclusions list, if it is, skip.
                 """
-                if rule.rule in exclusions and ip in exclusions[rule.rule]:
-                    logger.debug(f"Skipping rule {rule.rule} for target {ip}")
+                if exclusions and rule_id in exclusions and ip in exclusions[rule_id]:
+                    logger.debug(f"Skipping rule {rule_id} for target {ip} (excluded)")
                     continue
 
                 """
                 Only run rules that are in the allowed_aggressive config level.
                 """
                 if conf['config']['allow_aggressive'] < rule.intensity:
+                    logger.debug(f"Skipping rule {rule_id} for target {ip} (high intensity: {rule.intensity})")
                     continue
 
                 thread = threading.Thread(target=rule.check_rule, args=(ip, port, values, conf))

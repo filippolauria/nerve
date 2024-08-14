@@ -1,35 +1,46 @@
-import time
-import ipaddress
-
 from core.logging import logger
 from core.mailer import send_email
 from core.parser import ConfParser
 from core.redis import rds
 from core.utils import Network, Integration
+from ipaddress import ip_network
+from time import sleep
 
 
-def schedule_ips(networks, excluded_networks):
+def ip_in_excluded_network(ip_obj, excluded_networks):
+    exclude = False
+    for excluded_network in excluded_networks:
+        excluded_network_obj = ip_network(excluded_network)
+        if ip_obj in excluded_network_obj:
+            exclude = True
+            break
+
+    return exclude
+
+
+def schedule_ips(networks, excluded_networks=None):
+    networks = list(set(networks))
+    if excluded_networks:
+        excluded_networks = list(set(excluded_networks))
+
     for network in networks:
-        net = ipaddress.ip_network(network, strict=False)
-        for ip_address in net:
-            ip_addr = str(ip_address)
+        try:
+            network_obj = ip_network(network, strict=False)
 
-            if not isinstance(ip_addr, str):
-                continue
+            for ip_obj in network_obj:
 
-            if excluded_networks:
-                skip = False
-                for excluded_network in excluded_networks:
-                    if ipaddress.ip_address(ip_addr) in ipaddress.ip_network(excluded_network):
-                        skip = True
+                if excluded_networks and ip_in_excluded_network(ip_obj, excluded_networks):
+                    continue
 
-                if not skip:
-                    rds.store_sch(ip_addr)
-            else:
-                rds.store_sch(ip_addr)
+                rds.store_sch(str(ip_obj))
+
+        except ValueError as e:
+            logger.info(f'Error while scheduling IP addresses: {e}')
 
 
 def schedule_domains(domains):
+    domains = list(set(domains))
+
     for domain in domains:
         rds.store_sch(domain)
 
@@ -40,7 +51,7 @@ def scheduler():
     int_utils = Integration()
 
     while True:
-        time.sleep(10)
+        sleep(10)
         session_state = rds.get_session_state()
 
         if not session_state or session_state != 'created':
@@ -101,4 +112,4 @@ def scheduler():
                 rds.end_session()
                 break
 
-            time.sleep(20)
+            sleep(20)

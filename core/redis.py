@@ -10,10 +10,7 @@ from core.utils import Utils
 
 class RedisManager:
     def __init__(self):
-        self.utils = Utils()
-        self.r = None
         try:
-            # Configura un pool di connessione condiviso
             self.conn_pool = ConnectionPool(
                 host=config.RDS_HOST,
                 port=config.RDS_PORT,
@@ -21,8 +18,8 @@ class RedisManager:
                 db=0,
                 socket_timeout=5
             )
-            # Utilizza il pool di connessione configurato
             self.r = Redis(connection_pool=self.conn_pool)
+            self.utils = Utils()
         except RedisError as e:
             logger.error(f'Redis connection error: {e}')
             sys.exit(1)
@@ -44,14 +41,20 @@ class RedisManager:
     def get_slack_settings(self):
         return self.r.get('p_settings_slack')
 
-    def get_email_settings(self):
-        settings = self.r.get('p_settings_email')
-        return pickle.loads(settings) if settings else None
+    def pickle_load(self, data):
+        result = None
+
+        try:
+            result = pickle.loads(data)
+        except pickle.UnpicklingError as e:
+            logger.error(f'Error unpickling data: {e}')
+
+        return result
 
     def store_vuln(self, v):
         key_hash = 'vuln_' + self.utils.hash_sha1(f"{v['ip']}{v['port']}{v['rule_id']}{v['rule_details']}")
         if self.r.setnx(key_hash, pickle.dumps(v)):
-            logger.info('Vulnerability detected')
+            logger.info(f"Vulnerability detected ({v['rule_id']})")
 
     def store_by_prefix(self, prefix, key, value):
         return self.store_json(f'{prefix}{key}', value)
@@ -65,15 +68,18 @@ class RedisManager:
     def store_sch(self, value):
         self.store(f'sch_{value}', value)
 
+    def extract_ip_address(self, ip_key):
+        return ip_key.decode('utf-8').split('_', 1)[1]
+
     def get_ips_to_scan(self, limit):
         data = {}
-        for count, key in enumerate(self.r.scan_iter(match="sch_*", count=100), 1):
+        for count, key in enumerate(self.r.scan_iter(match="sch_*", count=limit), 1):
             value = self.r.get(key)
             if not value:
                 self.r.delete(key)
                 continue
 
-            ip = key.decode('utf-8').split('_', 1)[1]
+            ip = self.extract_ip_address(key)
             data[ip] = {}
             self.r.delete(key)
 
@@ -83,61 +89,59 @@ class RedisManager:
         return data
 
     def get_scan_data(self):
-        kv = {}
+        result = {}
         for ip_key in self.r.scan_iter(match="sca_*", count=100):
             data = self.r.get(ip_key)
-            if data:
-                try:
-                    result = pickle.loads(data)
-                    if result:
-                        ip = ip_key.decode('utf-8').split('_', 1)[1]
-                        kv[ip] = result
-                        self.r.delete(ip_key)
-                except pickle.UnpicklingError as e:
-                    logger.error(f'Error unpickling data: {e}')
-                    logger.debug(f'IP Key: {ip_key}')
+            loaded_data = self.pickle_load(data) if data else None
+            if not loaded_data:
+                continue
 
-        return kv
+            ip = self.extract_ip_address(ip_key)
+            result[ip] = loaded_data
+            self.r.delete(ip_key)
+
+        return result
+
+    def get_data(self, match, limit=100):
+        result = {}
+        for ip_key in self.r.scan_iter(match=match, count=limit):
+            data = self.r.get(ip_key)
+            loaded_data = self.pickle_load(data) if data else None
+            if not loaded_data:
+                continue
+
+            key = ip_key.decode('utf-8')
+            result[key] = loaded_data
+
+        return result
 
     def get_vuln_data(self):
-        kv = {}
-        for ip_key in self.r.scan_iter(match="vuln_*", count=100):
-            data = self.r.get(ip_key)
-            if data:
-                try:
-                    kv[ip_key.decode('utf-8')] = pickle.loads(data)
-                except pickle.UnpicklingError as e:
-                    logger.error(f'Error unpickling data: {e}')
-        return kv
-
-    def get_vuln_by_id(self, alert_id):
-        vuln = self.r.get(alert_id)
-        return pickle.loads(vuln) if vuln else None
+        return self.get_data(match="vuln_*")
 
     def get_inventory_data(self):
-        kv = {}
-        for ip_key in self.r.scan_iter(match="inv_*", count=100):
-            data = self.r.get(ip_key)
-            if data:
-                try:
-                    kv[ip_key.decode('utf-8')] = pickle.loads(data)
-                except pickle.UnpicklingError as e:
-                    logger.error(f'Error unpickling data: {e}')
-        return kv
+        return self.get_data(match="inv_*")
 
     def get_topology(self):
         return self.r.smembers("sess_topology")
 
+    def get_data_by_key(self, key):
+        data = self.r.get(key)
+        return self.pickle_load(data) if data else None
+
+    def get_vuln_by_id(self, alert_id):
+        return self.get_data_by_key(alert_id)
+
+    def get_email_settings(self):
+        return self.get_data_by_key('p_settings_email')
+
     def get_scan_config(self):
-        cfg = self.r.get('sess_config')
-        return pickle.loads(cfg) if cfg else {}
+        return self.get_data_by_key('sess_config')
+
+    def get_exclusions(self):
+        return self.get_data_by_key('p_rule-exclusions')
 
     def get_scan_progress(self):
         return sum(1 for _ in self.r.scan_iter(match="sch_*", count=100))
-
-    def get_exclusions(self):
-        exc = self.r.get('p_rule-exclusions')
-        return pickle.loads(exc) if exc else {}
 
     def get_last_scan(self):
         return self.r.get('p_last-scan')
@@ -187,8 +191,8 @@ class RedisManager:
         attempts = self.r.get(key)
         if attempts and int(attempts) >= config.MAX_LOGIN_ATTEMPTS:
             return True
-        else:
-            self.r.set(key, 1, ex=300)
+
+        self.r.set(key, 1, ex=300)
         return False
 
     def log_attempt(self, ip):
