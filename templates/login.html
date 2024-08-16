@@ -6,9 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="theme-color" content="#f1f1f1">
-    <title>Login :: NERVE</title>
-    <link href="{{ url_for('static', filename='favicon.ico') }}" rel="shortcut icon">
+    <title>Login :: {{ APP_NAME }}</title>
+    
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='icons/android-chrome-512x512.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/android-chrome-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='icons/site.webmanifest') }}">
+
     <link href="{{ url_for('static', filename='vendor/bootstrap4/css/bootstrap.min.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/auth.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='vendor/toastr/toastr.min.css') }}" rel="stylesheet">
 </head>
@@ -18,8 +26,8 @@
         <div class="auth-content">
             <div class="card">
                 <div class="card-body text-center">
-                    <div class="mb-4">
-                        <img class="brand" src="{{ url_for('static', filename='img/nerve_logo_black.png') }}" width="30%" height="30%">
+                    <div class="mb-2">
+                        <h1 class="m-0 text-uppercase text-logo">{{ APP_NAME }}</h1>
                     </div>
 
                     <form action="{{ url_for('login.view_login') }}" method="POST">
@@ -30,14 +38,8 @@
                             <input type="password" class="form-control" name="password" placeholder="Password" required>
                         </div>
                         <button class="btn btn-primary shadow-2 mb-4">Login</button>
-                        
-                        {% if err %}<span class="text-danger">Error: {{ err }}</span>{% endif %}
 
-                        {% if msg == "New Version is Available" %}
-                        <span style="color:darkorange; font-weight:bold">{{msg}}!</a></span><br>
-                        <span style="color:orange"><a href="https://github.com/filippolauria/nerve">Download</a></span>
-                        {% endif %}
-                        
+                        {% if err %}<span class="text-danger">Error: {{ err }}</span>{% endif %}
                     </form>
                 </div>
             </div>

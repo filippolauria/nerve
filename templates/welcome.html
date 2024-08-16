@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% set _title = 'Welcome!' %}
+{% set _title = 'Welcome' %}
 
 {% block title %}{{ _title }}{% endblock %}
 
@@ -14,27 +14,34 @@
         <div class="card">
             <div class="card-header">About</div>
             <div class="card-body">
-                <p class="card-title">
-                    Welcome to <strong>NERVE</strong>, the <strong>N</strong>etwork <strong>E</strong>xploitation, <strong>R</strong>econnaissance & <strong>V</strong>ulnerability <strong>E</strong>ngine
+                <p class="lead">
+                    Welcome to <strong>{{ APP_NAME }}</strong>: <em>{{ APP_EXTENDED_NAME }}</em>
                 </p>
                 <p>
-                    NERVE is designed to identify both short-term and long-term security vulnerabilities through one-time or continuous scan modes on a given network or host.
+                    <strong>{{ APP_NAME }}</strong> is engineered to detect both <span class="badge badge-secondary">short-term</span> and <span class="badge badge-secondary">long-term</span> security vulnerabilities through either <strong>one-time</strong> or <strong>continuous</strong> scan modes on specified networks or hosts.
                 </p>
                 <p>
-                    You can achieve this either programmatically via the <a href="{{ url_for('documentation.view_doc') }}">API</a> or through the Graphical User Interface.
+                    You can interact with {{ APP_NAME }} programmatically via the <a href="{{ url_for('documentation.view_doc') }}" class="text-decoration-none">API</a> or utilize this <strong>Web-GUI</strong>.
                 </p>
                 <p><strong>How does it work?</strong></p>
                 <ol>
-                    <li>Configure your network or domain list (e.g., 172.15.0.0/24).</li>
-                    <li>Define the types of attacks to run (e.g., Brute Force).</li>
-                    <li>Run the assessment.</li>
-                    <li>Wait for the results!</li>
+                    <li><strong>Configure</strong> your network or domain list (e.g., <code>172.15.0.0/24</code>).</li>
+                    <li><strong>Specify</strong> the types of attacks to execute (e.g., <code>Brute Force</code>).</li>
+                    <li><strong>Initiate</strong> the assessment.</li>
+                    <li><strong>Review</strong> the results once the scan is complete!</li>
                 </ol>
                 <div class="text-center">
-                    <img src="{{ url_for('static', filename='screenshots/12.png') }}" alt="Screenshot of NERVE">
+                    <img src="{{ url_for('static', filename='screenshots/12.png') }}" alt="Screenshot of {{ APP_NAME }}" class="img-fluid">
                 </div>
+                <footer class="mt-4">
+                    <p class="text-muted small">
+                        <strong>{{ APP_NAME }}</strong> is a fork of <a href="https://github.com/PaytmLabs/nerve" target="_blank" class="text-decoration-none">NERVE</a>.
+                    </p>
+                </footer>
             </div>
         </div>
     </div>
 </div>
+
+
 {% endblock %}

@@ -1,4 +1,8 @@
-import os
+from os import environ as env
+from os.path import join
+
+APP_NAME = 'NERVIUM'
+APP_EXTENDED_NAME = 'Network Exploration, Reconnaissance, Vulnerability, Integrated Unit for continuous Monitoring'
 
 # Logger Configuration
 LOG_LEVEL = 'INFO'
@@ -7,9 +11,12 @@ LOG_LEVEL = 'INFO'
 WEB_HOST = '0.0.0.0'  # Listen on all available interfaces
 WEB_PORT = 8080  # Port on which the web server will run
 WEB_DEBUG = False  # Disable debug mode for production
-WEB_USER = os.environ.get('username', '')  # Get username from environment variable
-WEB_PASSW = os.environ.get('password', '')  # Get password from environment variable
-WEB_LOG = 'nerve.log'  # Log file for the web server
+WEB_USER = env.get('username', '')  # Get username from environment variable
+WEB_PASSW = env.get('password', '')  # Get password from environment variable
+
+WEB_LOG_DIR = 'logs'
+WEB_LOG_FILE = 'nervium.log'  # Log file for the web server
+WEB_LOG_PATH = join(WEB_LOG_DIR, WEB_LOG_FILE)
 
 # Web Security Configuration
 WEB_SECURITY = True  # Enable security headers for all responses
@@ -21,7 +28,7 @@ WEB_SEC_HEADERS = {
     'XSS': '1; mode=block',  # X-XSS-Protection
     'XFO': 'DENY',  # X-Frame-Options
     'RP': 'no-referrer',  # Referrer-Policy
-    'Server': 'NERVE'  # Server header
+    'Server': APP_NAME,  # Server header
 }
 
 # Maximum allowed login attempts before banning the remote origin
@@ -33,7 +40,7 @@ RDS_PORT = 6379  # Redis port
 RDS_PASSW = None  # Redis password (None if no password is set)
 
 # Scan Configuration
-USER_AGENT = 'NERVE'  # User agent string for scans
+USER_AGENT = APP_NAME  # User agent string for scans
 
 # Default scan configuration for "Quick Start" scan
 DEFAULT_SCAN = {

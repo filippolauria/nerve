@@ -10,8 +10,8 @@ import psutil
 import hashlib
 import ipaddress
 
+from config import APP_NAME, WEB_LOG_PATH, USER_AGENT
 from core.logging import logger
-from config import WEB_LOG, USER_AGENT
 from urllib.parse import urlparse
 from version import VERSION
 
@@ -30,7 +30,7 @@ class Utils:
         return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     def clear_log(self):
-        open(os.path.join('logs', WEB_LOG), 'w').close()
+        open(WEB_LOG_PATH, 'w').close()
 
     def is_string_safe(self, string):
         return not bool(re.findall('[^A-Za-z0-9,. ]', string))
@@ -56,7 +56,7 @@ class Utils:
 
     def is_version_latest(self):
         try:
-            resp = requests.get('https://raw.githubusercontent.com/PaytmLabs/nerve/master/version.py', timeout=10)
+            resp = requests.get('https://raw.githubusercontent.com/filippolauria/nervium/master/version.py', timeout=10)
             repo_ver = resp.text.split("'")[1].replace('.', '')
             curr_ver = VERSION.replace('.', '').replace('\'', '')
             return int(repo_ver) <= int(curr_ver)
@@ -131,20 +131,20 @@ class Integration:
                     fields.append({'title': k, 'value': v, 'short': False})
 
             slack_data = {
-                "color": '#000000',
-                "pretext": "<!channel> NERVE Notification",
-                "author_name": ':warning: Notification',
-                "title": 'NERVE Report',
+                "color": "#000000",
+                "pretext": f"<!channel> {APP_NAME} Notification",
+                "author_name": ":warning: Notification",
+                "title": f"{APP_NAME} Report",
                 "fields": fields,
             }
             response = requests.post(hook, data=json.dumps(slack_data))
 
             if response.status_code != 200:
-                logger.error('Could not submit slack hook: {}'.format(response.text))
+                logger.error(f'Could not submit slack hook: {response.text}')
             else:
                 logger.info('Submitted slack hook')
         except Exception as e:
-            logger.error('Could not submit slack hook: {}'.format(e))
+            logger.error(f'Could not submit slack hook: {e}')
 
         return
 
@@ -167,7 +167,7 @@ class Integration:
             )
             return True
         except Exception as e:
-            logger.error('Could not submit webhook: {}'.format(e))
+            logger.error(f'Could not submit webhook: {e}')
 
         return
 

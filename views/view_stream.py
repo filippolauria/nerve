@@ -1,3 +1,4 @@
+from config import WEB_LOG_PATH
 from core.security import session_required
 from flask import Blueprint, Response, stream_with_context
 from time import sleep
@@ -10,7 +11,8 @@ stream = Blueprint('stream', __name__, template_folder='templates')
 def view_stream():
 
     def generate():
-        with open('logs/nerve.log', 'r') as fd:
+
+        with open(WEB_LOG_PATH, 'r') as fd:
             while True:
                 yield fd.read()
                 sleep(1)

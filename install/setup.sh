@@ -1,16 +1,16 @@
 #!/bin/bash
 
-# Nerve installation script.
+# NERVIUM installation script.
 
 _green='\033[0;32m'
 _red='\033[0;31m'
 _blue='\033[0;34m'
 _nc='\033[0m' # No Color
 
-# path of NERVE' systemd file
-systemd_service="/lib/systemd/system/nerve.service"
+# path of NERVIUM' systemd file
+systemd_service="/lib/systemd/system/nervium.service"
 
-installation_dir="/opt/nerve"
+installation_dir="/opt/nervium"
 
 # default port
 port=8080
@@ -27,12 +27,12 @@ is_fresh_installation() {
 }
 
 is_app_running() {
-  systemctl is-active --quiet nerve
+  systemctl is-active --quiet nervium.service
   if [ $? != 0 ]; then return 1; else return 0; fi
 }
 
 setup_port() {
-  # if NERVE's config.py exists...
+  # if NERVIUM's config.py exists...
   if [ -f "config.py" ]; then
     # ... we get the old TCP port from it...
     port=$(grep WEB_PORT config.py | awk -F' = ' '{print $2}')
@@ -128,7 +128,7 @@ configure_selinux() {
 }
 
 retrieve_credentials_from_systemd_unit() {
-  # if NERVE' systemd file exists...
+  # if NERVIUM' systemd file exists...
   if ! is_fresh_installation; then
     # ... we get the old username/password pair...
     password=$(grep "Environment=password=" "${systemd_service}")
@@ -149,7 +149,7 @@ shutdown_running_instance() {
     return 0
   fi
 
-  systemctl stop nerve.service
+  systemctl stop nervium.service
   if [ $? != 0 ]; then
     return 1
   fi
@@ -193,7 +193,7 @@ setup_systemd_unit() {
   
   cat <<EOF > "$systemd_service"
 [Unit]
-Description=NERVE
+Description=NERVIUM
 After=network.target redis-server.service
 
 [Service]
@@ -217,10 +217,10 @@ EOF
 }
 
 enable_and_start_app() {
-  # we enable and start NERVE
+  # we enable and start NERVIUM
   systemctl daemon-reload && \
-  systemctl enable nerve.service && \
-  systemctl start nerve.service
+  systemctl enable nervium.service && \
+  systemctl start nervium.service
 }
 
 # only debian is supported
@@ -308,11 +308,11 @@ fi
 
 print_green "[+] Setup Complete!"
 
-echo -e "[+] You may access NERVE using the following URL: ${_blue}http://your_ip_here${_nc}:${_green}${port}${_nc}."
+echo -e "[+] You may access NERVIUM using the following URL: ${_blue}http://your_ip_here${_nc}:${_green}${port}${_nc}."
 
 cat <<EOL
 [+] Credentials:
-    - You must have valid credentials to access NERVE.
+    - You must have valid credentials to access NERVIUM.
 
 EOL
   
@@ -328,12 +328,12 @@ else
 EOL
 fi
 
-echo -e "    - NERVE stores credentials in the file ${_blue}${systemd_service}${_nc},"
+echo -e "    - NERVIUM stores credentials in the file ${_blue}${systemd_service}${_nc},"
 
 cat <<EOL
       which is owned and readable/writable by root only.
     - You can change your credentials by editing that file.
-      Once done, remember to reload and restart NERVE:
+      Once done, remember to reload and restart NERVIUM:
 EOL
 
-echo -e "        ${_blue}systemctl daemon-reload && systemctl restart nerve${_nc}"
+echo -e "        ${_blue}systemctl daemon-reload && systemctl restart nervium.service${_nc}"

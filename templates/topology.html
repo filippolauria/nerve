@@ -112,42 +112,31 @@
 
     {% if data %}
     // Starting point - map center
-    nodes.push({ id: 2, label: "NERVE", group: "nerve", value: 10 });
+    nodes.push({ id: 2, label: "{{ APP_NAME }}", group: "nervium", value: 10 });
 
     {% for key in data %}
-    nodes.push({
-      id: "{{key.decode('utf-8')}}",
-      label: "{{key.decode('utf-8')}}",
-      group: "endpoint",
-      value: value
-    });
-    edges.push({
-      from: 2,
-      to: "{{key.decode('utf-8')}}",
-      length: LENGTH_SUB,
-      color: color,
-      fontColor: color,
-      width: width,
-      label: label
-    });
+    {% set k = key|utf8_decode %}
+    nodes.push({ id: "{{ k }}", label: "{{ k }}", group: "endpoint", value: value });
+    edges.push({ from: 2, to: "{{ k }}", length: LENGTH_SUB, color: color, fontColor: color, width: width, label: label });
     {% endfor %}
     {% endif %}
 
     {% if vulns %}
     {% for key, value in vulns.items() %}
+
     {% if value.rule_sev == 1 %}
-    nodes.push({ id: "{{key}}", label: '{{value.rule_confirm}}', group: 'vulnerability_low', value: 1 });
-    edges.push({ from: "{{value.ip}}", to: "{{key}}", label: "{{value.port}}", length: 140, width: WIDTH_SCALE * 1, color: RED });
+      {% set group = 'low' %}
     {% elif value.rule_sev == 2 %}
-    nodes.push({ id: "{{key}}", label: '{{value.rule_confirm}}', group: 'vulnerability_med', value: 1 });
-    edges.push({ from: "{{value.ip}}", to: "{{key}}", label: "{{value.port}}", length: 140, width: WIDTH_SCALE * 1, color: RED });
+      {% set group = 'med' %}
     {% elif value.rule_sev == 3 %}
-    nodes.push({ id: "{{key}}", label: '{{value.rule_confirm}}', group: 'vulnerability_high', value: 1 });
-    edges.push({ from: "{{value.ip}}", to: "{{key}}", label: "{{value.port}}", length: 140, width: WIDTH_SCALE * 1, color: RED });
+      {% set group = 'high' %}
     {% elif value.rule_sev == 4 %}
-    nodes.push({ id: "{{key}}", label: '{{value.rule_confirm}}', group: 'vulnerability_crit', value: 1 });
-    edges.push({ from: "{{value.ip}}", to: "{{key}}", label: "{{value.port}}", length: 140, width: WIDTH_SCALE * 1, color: RED });
+      {% set group = 'crit' %}
     {% endif %}
+
+    {% set k = key|utf8_decode %}
+    nodes.push({ id: "{{ k }}", label: '{{ value.rule_confirm }}', group: 'vulnerability_{{ group }}', value: 1 });
+    edges.push({ from: "{{ value.ip }}", to: "{{ k }}", label: "{{ value.port }}", length: 140, width: WIDTH_SCALE * 1, color: RED });
     {% endfor %}
     {% endif %}
 
@@ -178,7 +167,7 @@
         stabilization: { iterations: 2500 }
       },
       groups: {
-        nerve: {
+        nervium: {
           shape: "triangle",
           color: "black" // orange
         },
@@ -217,10 +206,6 @@
 
   }
 
-  window.addEventListener("load", () => {
-    draw();
-  });
-  
   $(document).ready(function() {
       $('[data-toggle="tooltip"]').tooltip(); 
 
@@ -234,6 +219,8 @@
               window.location.href = newUrl;
           }
       });
+
+      draw();
   });
 
 </script>

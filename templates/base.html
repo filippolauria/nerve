@@ -6,14 +6,20 @@
     <meta name="theme-color" content="#293142">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     {% block extra_meta %}{% endblock %}
-    <title>{% block title %}{% endblock %} :: NERVE</title>
+    <title>{% block title %}{% endblock %} :: {{ APP_NAME }}</title>
     
-    <link href="{{ url_for('static', filename='favicon.ico') }}" rel="shortcut icon">
+    <link rel="icon" type="image/png" sizes="512x512" href="{{ url_for('static', filename='icons/android-chrome-512x512.png') }}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/android-chrome-192x192.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='icons/favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}">
+    <link rel="manifest" href="{{ url_for('static', filename='icons/site.webmanifest') }}">
+
     <link href="{{ url_for('static', filename='vendor/bootstrap4/css/bootstrap.min.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='vendor/toastr/toastr.min.css') }}" rel="stylesheet">
     {% block extra_head_css %}{% endblock %}
 
-    <link href="{{ url_for('static', filename='css/nerve.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/main.css') }}" rel="stylesheet">
     <link href="{{ url_for('static', filename='css/master.css') }}" rel="stylesheet">
 </head>
 

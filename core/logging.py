@@ -1,19 +1,20 @@
-import sys
 import logging
 
-from config import LOG_LEVEL, WEB_LOG
+from config import APP_NAME, LOG_LEVEL, WEB_LOG_PATH
+from sys import stdout
 
-logger = logging.getLogger('NERVE')
-level  = logging.getLevelName(LOG_LEVEL)
+
+logger = logging.getLogger(APP_NAME)
+level = logging.getLevelName(LOG_LEVEL)
 logger.setLevel(level)
 
-ch = logging.StreamHandler(sys.stdout)
+ch = logging.StreamHandler(stdout)
 ch.setLevel(level)
 
 formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(process)d - %(message)s')
 ch.setFormatter(formatter)
 
-fh = logging.FileHandler('logs/' + WEB_LOG)
+fh = logging.FileHandler(WEB_LOG_PATH)
 fh.setFormatter(formatter)
 fh.setLevel(level)
 

@@ -1,5 +1,6 @@
 import config
 import os
+import re
 import sys
 
 from core.redis import rds
@@ -119,18 +120,31 @@ def show_vuln_count():
     return dict(vuln_count=len(rds.get_vuln_data()))
 
 
+@app.context_processor
+def inject_config_vars():
+    return {
+        'APP_NAME': config.APP_NAME if bool(re.match(r'^[a-zA-Z0-9 _]{,10}$', config.APP_NAME)) else 'NERVIUM',
+        'APP_EXTENDED_NAME': config.APP_EXTENDED_NAME if bool(re.match(r'^[a-zA-Z0-9 _,]+$', config.APP_EXTENDED_NAME)) else '',
+    }
+
+
+@app.template_filter('utf8_decode')
+def utf8_decode(value):
+    return value.decode('utf-8') if isinstance(value, bytes) else value
+
+
 if __name__ == '__main__':
     if not (config.WEB_USER or config.WEB_PASSW):
         reason = "The username or password environment variables are not set correctly."
 
-        service_filepath = "/lib/systemd/system/nerve.service"
+        service_filepath = "/lib/systemd/system/nervium.service"
         if os.path.isfile(service_filepath):
             reason += f"""
 
-If you are running NERVE as a systemd service,
+If you are running NERVIUM as a systemd service,
 please edit {service_filepath} in order to set valid username and password.
-Once done, remember to reload and restart NERVE:
-systemctl daemon-reload && systemctl restart nerve
+Once done, remember to reload and restart NERVIUM:
+systemctl daemon-reload && systemctl restart nervium.service
 """
 
         sys.exit(reason)

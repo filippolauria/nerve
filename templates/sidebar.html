@@ -1,10 +1,10 @@
 <div class="wrapper">
     <nav id="sidebar" class="d-flex flex-column">
-        <div class="sidebar-header">
+        <div class="d-flex align-items-end justify-content-center m-2">
             <a href="{{ url_for('index.view_index') }}">
-                <img src="{{ url_for('static', filename='img/nerve_logo.png') }}" class="app-logo" width="100px" height="40px">
+                <h1 class="text-uppercase text-logo text-white h3 my-0 mx-1">{{ APP_NAME }}</h1>
             </a>
-            <span class="app-logo"><b> <span class="logo-text"> v.{{version}} </span></b></span>
+            <small class="badge badge-secondary">{{ version }}</small>
         </div>
 
         <ul class="list-unstyled components flex-grow-1">
@@ -82,7 +82,7 @@
         
         <div class="text-center mt-auto mb-3">
             <a class="d-flex align-items-center justify-content-center p-2 bg-white text-decoration-none"
-                href="https://github.com/filippolauria/nerve" target="_blank">
+                href="https://github.com/filippolauria/nervium" target="_blank">
                 <i class="fas fa-star text-warning mr-1"></i><span class="d-none d-md-inline">Star us on GitHub</span>
             </a>
         </div>

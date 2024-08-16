@@ -1,4 +1,4 @@
-import config
+from config import WEB_LOG_DIR, WEB_LOG_FILE
 
 from core.redis import rds
 from core.reports import generate_html, generate_csv, generate_txt, generate_xml
@@ -16,7 +16,7 @@ def view_download(file):
         return {'status': 'file is missing'}, 400
 
     if file == 'server_log':
-        return send_from_directory('logs', config.WEB_LOG, as_attachment=True, cache_timeout=0)
+        return send_from_directory(WEB_LOG_DIR, WEB_LOG_FILE, as_attachment=True, cache_timeout=0)
 
     data = rds.get_vuln_data()
 
