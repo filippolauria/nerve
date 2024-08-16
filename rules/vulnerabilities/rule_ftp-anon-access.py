@@ -1,45 +1,43 @@
+from core.parser import ScanParser
+from core.redis import rds
+from core.rules import BaseRule
+from db.db_ports import ftp_ports
 from ftplib import FTP
 
-from core.redis   import rds
-from core.triage  import Triage
-from core.parser  import ScanParser
-from db.db_ports import ftp_ports
 
-class Rule:
-  def __init__(self):
-    self.rule = 'VLN_242C'
-    self.rule_severity = 4
-    self.rule_description = 'This rule checks if FTP Server allows Anonymous Access'
-    self.rule_details = ''
-    self.rule_confirm = 'FTP Anonymous Access Allowed'
-    self.rule_mitigation = '''FTP allows anonymous users access. Disable Anonymous FTP access if this is not a business requirement.'''
-    self.rule_match_port = ftp_ports
-    self.intensity = 0 
+class Rule(BaseRule):
+    def __init__(self):
+        super().__init__()
+        self.rule = 'VLN_242C'
+        self.rule_severity = 4
+        self.rule_description = 'This rule checks if FTP Server allows Anonymous Access'
+        self.rule_details = ''
+        self.rule_confirm = 'FTP Anonymous Access Allowed'
+        self.rule_mitigation = (
+            'FTP allows anonymous users access. '
+            'Disable Anonymous FTP access if this is not a business requirement.'
+        )
+        self.rule_match_port = ftp_ports
+        self.intensity = 0
 
-  def check_rule(self, ip, port, values, conf):
-    p = ScanParser(port, values)
-    
-    domain = p.get_domain()
+    def check_rule(self, ip, port, values, conf):
+        if port not in ftp_ports:
+            return
 
-    if port in self.rule_match_port:
-      try:
-        ftp = FTP(ip)
-        res = ftp.login()
-        if res:
-          if '230' in res or 'user logged in' in res or 'successful' in res:
-            self.rule_details = 'FTP with Anonymous Access Enabled'
-            rds.store_vuln({
-              'ip':ip,
-              'port':port,
-              'domain':domain,
-              'rule_id':self.rule,
-              'rule_sev':self.rule_severity,
-              'rule_desc':self.rule_description,
-              'rule_confirm':self.rule_confirm,
-              'rule_details':self.rule_details,
-              'rule_mitigation':self.rule_mitigation
-            })
-      except:
-        pass
-    
-    return
+        scan_parser = ScanParser(port, values)
+        try:
+            ftp = FTP(ip)
+            response = ftp.login()
+
+            if response and (
+                '230' in response or
+                'user logged in' in response or
+                'successful' in response
+            ):
+                self.rule_details = 'FTP with Anonymous Access Enabled'
+                domain = scan_parser.get_domain()
+                vuln_dict = self.get_vuln_dict(ip, port, domain)
+                rds.store_vuln(vuln_dict)
+                return
+        except Exception:
+            pass

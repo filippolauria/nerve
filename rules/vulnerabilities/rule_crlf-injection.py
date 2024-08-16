@@ -1,4 +1,5 @@
 from core.redis import rds
+from core.rules import BaseRule
 from core.triage import Triage
 from core.parser import ScanParser
 
@@ -6,8 +7,9 @@ from random import choices
 from string import ascii_letters, digits
 
 
-class Rule:
+class Rule(BaseRule):
     def __init__(self):
+        super().__init__()
         self.rule = 'VLN_ZPZB'
         self.rule_severity = 2
         self.rule_description = (

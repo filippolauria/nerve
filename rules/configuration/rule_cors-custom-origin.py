@@ -1,10 +1,9 @@
-import random
-import string
-
 from core.parser import ScanParser
 from core.redis import rds
 from core.rules import BaseRule
 from core.triage import Triage
+from random import choices
+from string import ascii_letters, digits
 
 
 class Rule(BaseRule):
@@ -22,7 +21,7 @@ class Rule(BaseRule):
         self.intensity = 1
 
     def randomize_origin(self, length=6):
-        rand_str = ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+        rand_str = ''.join(choices(ascii_letters + digits, k=length))
         return f'https://{rand_str}.com'
 
     def check_rule(self, ip, port, values, conf):

@@ -1,87 +1,64 @@
-import string
-import os
-import struct
-import random
-
-from core.redis  import rds
+from core.redis import rds
+from core.rules import BaseRule
 from core.triage import Triage
 from core.parser import ScanParser
 from db.db_paths import COMMON_WEB_PATHS
-
-class Rule:
-  def __init__(self):
-    self.rule = 'VLN_AS91'
-    self.rule_severity = 1
-    self.rule_description = 'This rule checks for forgotten .DS_Store files'
-    self.rule_confirm = '.DS_Store File Found'
-    self.rule_details = ''
-    self.rule_mitigation = '''A .DS_Store file is a special MacOSX file which reveals the files within the same folder where it lives. and may indicate what other files exists on the webserver.
-This file occassionally get pushed by mistake due to not adding it to .gitignore.
-Remove this file and add .DS_Store to .gitignore'''
-    self.rule_match_string = '.DS_Store' 
-    self.uris = COMMON_WEB_PATHS
-    self.intensity = 2
-
-  def is_file_ds_store(self, filename):  
-    offset_position = 0 
-    
-    if len(filename) < offset_position + 2 * 4:
-      return False
-
-    if len(filename) < 36:
-      return False
-    
-    value = filename[offset_position:offset_position + 2 * 4]
-
-    magic1, magic2 = struct.unpack_from(">II", value)
-    
-    if not magic1 == 0x1 and not magic2 == 0x42756431:
-      return False
-      
-    return True
+from os import remove
+from struct import unpack_from
+from tempfile import NamedTemporaryFile
 
 
-  def generate_filename(self):
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+class Rule(BaseRule):
+    def __init__(self):
+        super().__init__()
+        self.rule = 'VLN_AS91'
+        self.rule_severity = 1
+        self.rule_description = 'This rule checks for forgotten .DS_Store files'
+        self.rule_confirm = '.DS_Store File Found'
+        self.rule_details = ''
+        self.rule_mitigation = (
+            '''A .DS_Store file is a special MacOSX file which reveals the files within the same folder '''
+            '''where it lives, and may indicate what other files exist on the webserver. '''
+            '''This file occasionally gets pushed by mistake due to not adding it to .gitignore. '''
+            '''Remove this file and add .DS_Store to .gitignore'''
+        )
+        self.rule_match_string = '.DS_Store'
+        self.intensity = 2
 
-  def check_rule(self, ip, port, values, conf):
-    t = Triage()
-    p = ScanParser(port, values)
-    
-    module = p.get_module()
-    domain = p.get_domain()
-  
-    if 'http' not in module:
-      return
+    def is_file_ds_store(self, filename):
+        offset_position = 0
 
-    for uri in self.uris:
-      filename = self.generate_filename()
-      resp = t.http_request(ip, port, uri=uri + '/.DS_Store')
+        if len(filename) < 36 or len(filename) < offset_position + 2 * 4:
+            return False
 
-      if resp:
-        if os.path.exists(filename):
-          os.remove(filename)
-        
-        with open(filename, "wb") as f:
-          f.write(resp.content)
-          f.close()
+        value = filename[offset_position:offset_position + 2 * 4]
 
-        with open(filename, 'rb') as f:
-          if self.is_file_ds_store(f.read()):
-            self.rule_details = 'Identified .DS_Store file at {}'.format(resp.url)
-            rds.store_vuln({
-              'ip':ip,
-              'port':port,
-              'domain':domain,
-              'rule_id':self.rule,
-              'rule_sev':self.rule_severity,
-              'rule_desc':self.rule_description,
-              'rule_confirm':self.rule_confirm,
-              'rule_details':self.rule_details,
-              'rule_mitigation':self.rule_mitigation
-            })
-          
-        os.remove(filename)
-    return
+        magic1, magic2 = unpack_from(">II", value)
 
-        
+        return magic1 == 0x1 or magic2 == 0x42756431
+
+    def check_rule(self, ip, port, values, conf):
+        scan_parser = ScanParser(port, values)
+
+        if not scan_parser.is_module('http'):
+            return
+
+        triage = Triage()
+
+        for uri in COMMON_WEB_PATHS:
+            response = triage.http_request(ip, port, uri=f'{uri}/.DS_Store')
+            if not response:
+                continue
+
+            with NamedTemporaryFile(delete=False) as temp_file:
+                temp_file.write(response.content)
+                temp_file.flush()
+
+                with open(temp_file.name, 'rb') as fd:
+                    if self.is_file_ds_store(fd.read()):
+                        self.rule_details = f'Identified .DS_Store file at {response.url}'
+                        domain = scan_parser.get_domain()
+                        vuln_dict = self.get_vuln_dict(ip, port, domain)
+                        rds.store_vuln(vuln_dict)
+
+            remove(temp_file.name)
