@@ -1,7 +1,7 @@
 
 # Network Exploration, Reconnaissance, Vulnerability, Integrated Unit for continuous Monitoring
 
-![NERVIUM](../../blob/master/static/screenshots/2.png?raw=true)
+![NERVIUM](../../blob/master/static/screenshots/dashboard.png?raw=true)
 
   
 
@@ -220,20 +220,6 @@ To learn about NERVIUM (GUI, API, etc.) we advise you to check out the documenta
 Once you deploy it, authenticate and on the left sidebar you will find a documentation link for API and GUI usage.
 
   
-
-## GUI Documentation
-
-![NERVIUM](../../blob/master/static/screenshots/10.png?raw=true)
-
-  
-
-## API Documentation
-
-![NERVIUM](../../blob/master/static/screenshots/11.png?raw=true)
-
-  
-
-
 # License
 
 NERVIUM is distributed under the MIT License. See LICENSE for more information.
@@ -245,36 +231,17 @@ NERVIUM is distributed under the MIT License. See LICENSE for more information.
 
 ## Login Screen
 
-![NERVIUM](../../blob/master/static/screenshots/1.png?raw=true)
+![NERVIUM Login page](../../blob/master/static/screenshots/login.png?raw=true)
 
 ## Dashboard Screen
 
-![NERVIUM](../../blob/master/static/screenshots/2.png?raw=true)
+![NERVIUM Dashboard](../../blob/master/static/screenshots/dashboard.png?raw=true)
 
 ## Assessment Configuration
 
-![NERVIUM](../../blob/master/static/screenshots/3.png?raw=true)
-
-## API Documentation
-
-![NERVIUM](../../blob/master/static/screenshots/4.png?raw=true)
+![NERVIUM Assessment Configuration](../../blob/master/static/screenshots/assessment_configuration.png?raw=true)
 
 ## Reporting
 
-![NERVIUM](../../blob/master/static/screenshots/5.png?raw=true)
+![NERVIUM Reports](../../blob/master/static/screenshots/reports.png?raw=true)
 
-## Network Map
-
-![NERVIUM](../../blob/master/static/screenshots/6.png?raw=true)
-
-## Vulnerability page
-
-![NERVIUM](../../blob/master/static/screenshots/7.png?raw=true)
-
-## Log Console
-
-![NERVIUM](../../blob/master/static/screenshots/8.png?raw=true)
-
-## HTML Report
-
-![NERVIUM](../../blob/master/static/screenshots/9.png?raw=true)

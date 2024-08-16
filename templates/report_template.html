@@ -2,16 +2,16 @@
 <html lang="en">
 
 <head>
-    <meta content="text/html; charset=utf-8" http-equiv="content-type">
-    <link href="https://fonts.googleapis.com/css2?family=Recursive:wght@600&display=swap" rel="stylesheet">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Recursive:wght@600&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #293142;
             color: #333;
             margin: 0 auto;
             width: 960px;
-            font-family: Verdana, Geneva, Tahoma, sans-serif
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
         }
 
         h1, h2, h3, h4 {
@@ -42,77 +42,43 @@
             margin-top: 20px;
         }
 
-        #overview {
-            width: 95%;
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            padding: 5px 12px;
+            font-family: monospace;
+            text-align: left;
+        }
+
+        #overview, #summary, #details {
             border-top-left-radius: 2em;
             border-bottom-right-radius: 2em;
             overflow: hidden;
         }
 
-        #overview th {
+        #overview th, #summary th, #details th {
             background-color: #13869A;
-            padding: 5px 12px;
             color: white;
         }
 
-        #overview td {
+        #overview td, #summary td, #details td {
             background-color: lightgrey;
-            padding: 5px 12px;
-            font-family: monospace;
         }
 
-        #overview td:hover {
+        #overview td:hover, #summary td:hover, #details td:hover {
             background-color: white;
         }
 
-        #summary {
-            width: 100%;
-            border-top-left-radius: 2em;
-            border-bottom-right-radius: 2em;
-            overflow: hidden;
-        }
-
-        #summary th {
-            background-color: #13869A;
-            padding: 5px 12px;
-            color: white;
-        }
-
         #summary td {
-            background-color: darkgrey;
             text-align: center;
-            padding: 4px 8px;
-            font-family: monospace;
             font-size: 15px;
         }
 
         #summary tr:nth-child(even) td {
             background-color: lightgrey;
-        }
-
-        #summary tr:nth-child(even) td:hover {
-            background-color: white;
-        }
-
-        #summary td:hover {
-            background-color: white;
-        }
-
-        #details {
-            border-top-left-radius: 2em;
-            overflow: hidden;
-        }
-
-        #details th {
-            padding: 5px 12px;
-        }
-
-        #details tr:nth-child(even) td {
-            background-color: darkgrey;
-        }
-
-        #details tr:nth-child(even) td:hover {
-            background-color: white;
         }
 
         #details .sev_4 {
@@ -135,18 +101,8 @@
             background-color: lightblue;
         }
 
-        #details td {
-            background-color: lightgrey;
-            padding: 5px 12px;
-            font-family: monospace;
-            font-size: 15px;
-        }
-
-        #details td:hover {
-            background-color: white;
-        }
-
-        footer p {
+        footer {
+            text-align: center;
             font-size: 12px;
             color: white;
         }
@@ -154,13 +110,13 @@
 </head>
 
 <body>
-    <div class='headerdiv'>
+    <div class="headerdiv">
         <h1>{{ APP_NAME }} <span style="font-size: 10px">{{ json_data.version }}</span></h1>
     </div>
-    <h2>Overview</h2>
-    <div class='overviewDiv'>
 
-        <div style='width:50%'>
+    <h2>Overview</h2>
+    <div class="overviewDiv">
+        <div style="width: 50%;">
             <table id="overview">
                 <tr>
                     <th>TIMESTAMP</th>
@@ -184,11 +140,8 @@
                 </tr>
             </table>
         </div>
-
-        <div style='width:50%;'>
-
-
-            <table id='summary'>
+        <div style="width: 50%;">
+            <table id="summary">
                 <tr>
                     <th>CRITICAL</th>
                     <td>{{ json_data.vuln_count.4 }}</td>
@@ -209,11 +162,8 @@
                     <th>INFO</th>
                     <td>{{ json_data.vuln_count.0 }}</td>
                 </tr>
-
             </table>
         </div>
-
-
     </div>
 
     <h2>Vulnerabilities</h2>
@@ -221,7 +171,7 @@
         {% if json_data.vulns %}
         {% for key, value in json_data.vulns.items() %}
         {% if value.rule_sev != 0 %}
-        {% set sev_class = "sev_" ~ value.rule_sev }
+        {% set sev_class = "sev_" ~ value.rule_sev %}
         <tr>
             <th class="{{ sev_class }}">TITLE</th>
             <th class="{{ sev_class }}">{{ value.rule_desc }}</th>
@@ -230,7 +180,6 @@
             <th class="{{ sev_class }}">FINDINGS</th>
             <td>{{ value.rule_confirm }}</td>
         </tr>
-
         <tr>
             <th class="{{ sev_class }}">ADDRESS</th>
             <td>{{ value.ip }}{% if value.domain %} ({{ value.domain }}){% endif %}</td>
@@ -241,7 +190,7 @@
         </tr>
         <tr>
             <th class="{{ sev_class }}">DETAILS</th>
-            <td class='details'>{{ value.rule_details }}</td>
+            <td class="details">{{ value.rule_details }}</td>
         </tr>
         <tr>
             <th class="{{ sev_class }}">RULE_ID</th>
@@ -254,13 +203,9 @@
         {% endif %}
         {% endfor %}
         {% endif %}
-
-
     </table>
 
-    <footer style="text-align: center;">
-        <p>{{ APP_NAME }}</p>
-    </footer>
+    <footer>{{ APP_NAME }}</footer>
 </body>
 
 </html>

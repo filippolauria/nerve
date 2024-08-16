@@ -40,6 +40,7 @@
             </div>
         </div>
     </div>
+
     <div class="col-sm-6 col-md-6 col-lg-3 mt-3">
         <div class="card">
             <div class="content">
@@ -78,7 +79,7 @@
                         <div class="detail text-center">
                             <p>Last Scanned</p>
                             <span class="number">
-                                <span style="font-size:17px"><b>{{ last_scan.decode('utf-8') }}</b></span>
+                                <span style="font-size:17px"><b>{{ last_scan|utf8_decode }}</b></span>
                             </span>
                         </div>
                     </div>
@@ -104,7 +105,7 @@
                     <div class="col-sm-8">
                         <div class="detail text-center">
                             <p>Total Vulnerabilities</p>
-                            <span class="number"><a class="c-red" href="{{ url_for('vulnerabilities.view_vulns') }}">{{vulns|length}}</a></span>
+                            <span class="number"><a class="c-red" href="{{ url_for('vulnerabilities.view_vulns') }}">{{ vulns|length }}</a></span>
                         </div>
                     </div>
                 </div>
@@ -155,7 +156,7 @@
 
 <div class="row">
 
-    {% if networks and domains %}
+    {% if networks or domains %}
     <div class="col-md-6">
         <div class="card">
             <div class="content">
@@ -178,7 +179,7 @@
                         <tbody>
                             <tr>
                                 <td><i class="fa fa-network-wired"></i></td>
-                                <td class="text-right">{{network}}</td>
+                                <td class="text-right">{{ network }}</td>
                             </tr>
                         </tbody>
                         {% endfor %}
@@ -206,7 +207,7 @@
                         <tbody>
                             <tr>
                                 <td><i class="fa fa-globe"></i></td>
-                                <td class="text-right">{{domain}}</td>
+                                <td class="text-right">{{ domain }}</td>
                             </tr>
                         </tbody>
                         {% endfor %}
@@ -240,7 +241,7 @@
                         <tbody>
                             <tr>
                                 <td><i class="fa fa-laptop c-lightgreen"></i></td>
-                                <td class="text-right">{{ host.decode('utf-8') }}</td>
+                                <td class="text-right">{{ host|utf8_decode }}</td>
                             </tr>
                         </tbody>
                         {% endfor %}

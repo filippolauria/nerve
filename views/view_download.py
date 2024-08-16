@@ -41,4 +41,4 @@ def view_download(file):
     else:
         return {'status': 'file type not supported'}, 400
 
-    return send_from_directory('reports', report_file, as_attachment=True, cache_timeout=0)
+    return send_from_directory('reports', report_file, as_attachment=True, max_age=0)

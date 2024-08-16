@@ -5,7 +5,7 @@
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
         <ul class="nav navbar-nav ml-auto">
-            <li class="nav-item dropdown">
+            <li class="nav-item dropdown d-flex align-items-center">
                 <div class="nav-dropdown">
                     <a href="" class="nav-item nav-link dropdown-toggle" data-toggle="dropdown">
                         <i class="fas fa-user-shield"></i>
@@ -35,27 +35,29 @@
                 </div>
             </li>
 
-            {% if vuln_count %}{% set vuln_class = 'badge-success' %}{% else %}{% set vuln_class = 'badge-danger' %}{% endif %}
-            <li class="nav-item dropdown">
-                <div class="nav-dropdown">
-                    <span class="nav-item nav-link">
-                        <i class="fas fa-bell mx-1"></i><span class="badge {{ vuln_class }}">{{ vuln_count }}</span>
-                    </span>
-                </div>
+            {% if status != "Ready" and vuln_count > 0 %}
+            <li class="nav-item d-flex align-items-center">
+                <span class="nav-item nav-link">
+                    <a class="btn btn-secondary" href="{{ url_for('vulnerabilities.view_vulns') }}">
+                        <i class="fas fa-bell mx-1"></i>
+                        <span class="badge badge-light">{{ vuln_count }}</span>
+                        <span class="sr-only">Vulnerabilities found</span>
+                    </a>
+                </span>
             </li>
+            {% endif %}
 
-            <li class="nav-item dropdown">
-                <div class="nav-dropdown">
-                    <span class="nav-item nav-link">
-                        {% if status == "Ready" %}
-                        <span class="navbar-status c-green"><i class="fas fa-smile mx-1"></i>
-                        {% else %}
-                        <span class="navbar-status c-white"><i class="fa fa-spinner fa-spin mx-1"></i>
-                        {% endif %}
-                            {{status}}
-                        </span> 
-                    </span>
-                </div>
+            <li class="nav-item d-flex align-items-center">
+                <span class="nav-item nav-link">
+                    {% if status == "Ready" %}
+                    <span class="navbar-status c-green"><i class="fas fa-smile mx-1"></i>
+                    {% else %}
+                    <span class="navbar-status c-white"><i class="fa fa-spinner fa-spin mx-1"></i>
+                    {% endif %}
+                        {{status}}
+                    </span> 
+                </span>
+                
             </li>
 
         </ul>

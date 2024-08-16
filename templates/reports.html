@@ -13,50 +13,78 @@
     Below you can download your latest assessment report in various formats.
 </p>
 
-<div class="row">
+<div class="row justify-content-md-center">
 
-    <div class="col-sm-6 col-md-3">
-        <div class="card">
-            <div class="card-header"><strong>Detailed Report (HTML)</strong></div>
-            <div class="card-body d-flex justify-content-center">
-                <a href="{{ url_for('download.view_download', file='report_html') }}">
-                    <img src="{{ url_for('static', filename='img/report.png') }}" class="img-fluid" alt="Report HTML" />
-                </a>
-            </div>
-        </div>
-    </div>
+    <div class="row">
+        <div class="col-sm-6 col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-code mx-1"></i>
+                    <strong>Detailed Report</strong>
+                    <span class="badge badge-primary">HTML</span>
+                </div>
 
-    <div class="col-sm-6 col-md-3">
-        <div class="card">
-            <div class="card-header"><strong>Raw Report (TXT)</strong></div>
-            <div class="card-body d-flex justify-content-center">
-                <a href="{{ url_for('download.view_download', file='report_txt') }}">
-                    <img src="{{ url_for('static', filename='img/report_txt.png') }}" class="img-fluid" alt="Report TXT" />
+                <a href="{{ url_for('download.view_download', file='report_html') }}" class="text-dark text-decoration-none">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <i class="fas fa-file-code fa-3x"></i>
+                        <p class="mt-3">This detailed HTML report provides a comprehensive view of the scan results with formatted content for easy reading.</p>
+                    </div>
                 </a>
             </div>
         </div>
-    </div>
+    
+        <div class="col-sm-6 col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-alt mx-1"></i>
+                    <strong>Raw Report</strong>
+                    <span class="badge badge-secondary">TXT</span>
+                </div>
 
-    <div class="col-sm-6 col-md-3">
-        <div class="card">
-            <div class="card-header"><strong>Raw Report (CSV)</strong></div>
-            <div class="card-body d-flex justify-content-center">
-                <a href="{{ url_for('download.view_download', file='report_csv') }}">
-                    <img src="{{ url_for('static', filename='img/report_csv.png') }}" class="img-fluid" alt="Report CSV" />
+                <a href="{{ url_for('download.view_download', file='report_txt') }}" class="text-dark text-decoration-none">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <i class="fas fa-file-alt fa-3x"></i>                  
+                        <p class="mt-3">This plain text report contains raw scan data, ideal for quick inspection and basic data extraction.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    
+        <div class="col-sm-6 col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-csv mx-1"></i>
+                    <strong>Raw Report</strong>
+                    <span class="badge badge-success">CSV</span>
+                </div>
+                
+                <a href="{{ url_for('download.view_download', file='report_csv') }}" class="text-dark text-decoration-none">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <i class="fas fa-file-csv fa-3x"></i>
+                        <p class="mt-3">This CSV report provides the scan results in a tabular format, suitable for data analysis and integration with other tools.</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    
+        <div class="col-sm-6 col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <i class="fas fa-file-code mx-1"></i>
+                    <strong>Raw Report</strong>
+                    <span class="badge badge-info">XML</span>
+                </div>
+
+                <a href="{{ url_for('download.view_download', file='report_xml') }}" class="text-dark text-decoration-none">
+                    <div class="card-body d-flex flex-column align-items-center">
+                        <i class="fas fa-file-code fa-3x"></i>
+                        <p class="mt-3">This XML report contains structured scan data, suitable for integration with other systems and detailed data processing.</p>
+                    </div>
                 </a>
             </div>
         </div>
     </div>
-    <div class="col-sm-6 col-md-3">
-        <div class="card">
-            <div class="card-header"><strong>Raw Report (XML)</strong></div>
-            <div class="card-body d-flex justify-content-center">
-                <a href="{{ url_for('download.view_download', file='report_xml') }}">
-                    <img src="{{ url_for('static', filename='img/report_xml.png') }}" class="img-fluid" alt="Report XML" />
-                </a>
-            </div>
-        </div>
-    </div>
+    
 </div>
 
 {% endblock %}
